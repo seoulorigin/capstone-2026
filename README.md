@@ -13,10 +13,10 @@ main (배포 또는 제출 가능한 안정 버전)
 ## 2. 기본 작업 흐름
 ```
 1. Issue 생성
-2. feature 브랜치 생성
+2. feature/* 브랜치 생성
 3. Pull Request 생성 (feature -> develop)
-4. Review 이후 merge 진행
-5. 배포 시 develop -> main
+4. Review 이후 Squash and merge 진행
+5. feature/* 브랜치 삭제
 ```
 
 ## 3. feature 브랜치 생성 방법
@@ -26,7 +26,7 @@ git checkout develop
 git pull
 ```
 
-새 기능 작업 시 브랜치 생성
+새 기능 작업 시 feature 브랜치 생성 및 해당 브랜치로 이동
 ```
 git checkout -b feature/<feature-name>
 ```
@@ -47,7 +47,7 @@ fix: 채팅 메시지 오류 수정
 ```
 
 ## 5. Issue 사용 규칙
-**모든 작업은 Issue 생성 후 시작합니다.**  
+**모든 작업은 반드시 Issue 생성 후 시작합니다.**  
 ```
 1. feature (기능 개발)
 2. bug (버그 발생)
@@ -61,15 +61,15 @@ fix: 채팅 메시지 오류 수정
 ```
 
 ## 6. Branch Protection Rules  
-프로젝트의 안정적인 협업을 위해 **GitHub Branch Protection**을 사용합니다.  
+안정적인 협업을 위해 **GitHub Branch Protection**을 사용합니다.  
 `develop`과 `main` 브랜치에는 아래와 같은 규칙이 적용됩니다.
 ### 6.1. develop
 1. `develop` 브랜치에는 직접 **push**할 수 없습니다.
 2. 모든 변경 사항은 **PR**을 통해서만 **Merge**됩니다.
 3. **PR**이 **Merge**되기 전에 설정된 **CI 검사**가 통과해야 합니다.
-4. **PR**에 남겨진 *Review Comment**가 모두 해결되어야 **Merge**가 가능합니다.
+4. **PR**에 남겨진 **Review Comment**가 모두 해결되어야 **Merge**가 가능합니다.
 
 ### 6.2. main
 1. `main` 브랜치에는 직접 **push**할 수 없습니다.
-2. `develop` 브랜치에는 **PR**을 통해서만 **Merge**할 수 있습니다.
+2. `develop` 브랜치에는 **PR**을 통해서만 **Merge**할 수 있습니다. (Create a merge commit)
 3. **PR**이 **Merge**되기 전에 설정된 **CI 검사**가 통과해야 합니다.
