@@ -1,0 +1,31 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 환경변수
+.env
+.env.*
+
+# DB
+*.db
+*.sqlite3
+
+# Mac
+.DS_Store
+
+# VSCode
+.vscode/
+
+# 프론트엔드
+node_modules/
+dist/
+build/
+
+# 키 파일
+*.pem
+*.key
