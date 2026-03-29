@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers import auth, project # routers 폴더 내의 파일을 가져온다
 
 app = FastAPI(title="Docker Compose Manager")
 
@@ -13,6 +14,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+
+app.include_router(project.router, prefix="/projects", tags=["Projects"])
+
 @app.get("/")
 async def root():
     return {"message": "Docker Compose Manager API"}
+
+
