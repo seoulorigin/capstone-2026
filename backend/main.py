@@ -1,25 +1,27 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, project # routers 폴더 내의 파일을 가져온다
+from backend.routers import auth, project
 
-app = FastAPI(title="Docker Compose Manager")
+app = FastAPI()
+
+# 프론트엔드 서버 주소 허용
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173"],
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=True,  # 프론트엔드와 쿠키를 주고받기 위해 필수
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-
-app.include_router(project.router, prefix="/projects", tags=["Projects"])
+# 라우터 등록
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(project.router, prefix="/projects", tags=["projects"])
 
 @app.get("/")
 async def root():
-    return {"message": "Docker Compose Manager API"}
-
-
+    return {"message": "Capstone API Server is running"}
