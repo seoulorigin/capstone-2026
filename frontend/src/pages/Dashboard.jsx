@@ -2,52 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useProjects } from "@/hooks/useProjects"
-
-// 선택된 프로젝트에 따라 표시할 컨테이너 목록 mock 데이터
-const mockContainersByProject = {
-  1: [
-    {
-      id: "1-1",
-      name: "nginx",
-      image: "nginx:latest",
-      status: "running",
-    },
-  ],
-  2: [
-    {
-      id: "2-1",
-      name: "nginx",
-      image: "nginx:latest",
-      status: "running",
-    },
-    {
-      id: "2-2",
-      name: "postgres",
-      image: "postgres:15",
-      status: "stopped",
-    },
-  ],
-  3: [
-    {
-      id: "3-1",
-      name: "nginx",
-      image: "nginx:latest",
-      status: "running",
-    },
-    {
-      id: "3-2",
-      name: "postgres",
-      image: "postgres:15",
-      status: "running",
-    },
-    {
-      id: "3-3",
-      name: "redis",
-      image: "redis:7",
-      status: "running",
-    },
-  ],
-}
+import { useContainers } from "@/hooks/useContainers"
 
 // API에서 받은 created_at 값을 화면용 날짜 문자열로 변환
 function formatCreatedAt(createdAt) {
@@ -62,16 +17,34 @@ function formatCreatedAt(createdAt) {
   return date.toLocaleDateString("ko-KR")
 }
 
+// API에서 받은 updated_at 값을 화면용 날짜/시간 문자열로 변환
+function formatUpdatedAt(updatedAt) {
+  if (!updatedAt) return "-"
+
+  const date = new Date(updatedAt)
+
+  if (Number.isNaN(date.getTime())) {
+    return updatedAt
+  }
+
+  return date.toLocaleString("ko-KR")
+}
+
 export default function Dashboard() {
   // 현재 선택된 프로젝트와 상세 탭 상태를 관리
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [activeTab, setActiveTab] = useState("metrics")
 
   // 프로젝트 목록 조회 상태를 TanStack Query로 관리
-  const { data, isLoading, isError, error } = useProjects()
+  const {
+    data: projectData,
+    isLoading: isProjectsLoading,
+    isError: isProjectsError,
+    error: projectsError,
+  } = useProjects()
 
   // API 응답에서 프로젝트 배열만 추출
-  const projects = data?.projects ?? []
+  const projects = projectData?.projects ?? []
 
   // 프로젝트 목록이 로드되면 첫 프로젝트를 기본 선택
   useEffect(() => {
@@ -85,9 +58,16 @@ export default function Dashboard() {
     return projects.find((project) => project.id === selectedProjectId) ?? null
   }, [projects, selectedProjectId])
 
-  // 선택된 프로젝트에 맞는 컨테이너 목록을 표시
-  const containers =
-    selectedProjectId !== null ? mockContainersByProject[selectedProjectId] || [] : []
+  // 선택된 프로젝트 기준으로 컨테이너 목록 조회 상태를 관리
+  const {
+    data: containerData,
+    isLoading: isContainersLoading,
+    isError: isContainersError,
+    error: containersError,
+  } = useContainers(selectedProjectId)
+
+  // API 응답에서 컨테이너 배열만 추출
+  const containers = containerData?.containers ?? []
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-8">
@@ -108,13 +88,13 @@ export default function Dashboard() {
               </CardHeader>
 
               <CardContent className="space-y-3">
-                {isLoading ? (
+                {isProjectsLoading ? (
                   <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
                     프로젝트 목록을 불러오는 중입니다.
                   </div>
-                ) : isError ? (
+                ) : isProjectsError ? (
                   <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-                    {error?.message ?? "프로젝트 목록을 불러오지 못했습니다."}
+                    {projectsError?.message ?? "프로젝트 목록을 불러오지 못했습니다."}
                   </div>
                 ) : projects.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
@@ -181,13 +161,26 @@ export default function Dashboard() {
                 )}
 
                 <div className="overflow-hidden rounded-lg border bg-white">
-                  <div className="grid grid-cols-3 border-b bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
+                  <div className="grid grid-cols-4 border-b bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
                     <span>이름</span>
                     <span>이미지</span>
                     <span>상태</span>
+                    <span>업데이트</span>
                   </div>
 
-                  {containers.length === 0 ? (
+                  {selectedProjectId === null ? (
+                    <div className="px-4 py-6 text-sm text-slate-500">
+                      먼저 프로젝트를 선택해주세요.
+                    </div>
+                  ) : isContainersLoading ? (
+                    <div className="px-4 py-6 text-sm text-slate-500">
+                      컨테이너 목록을 불러오는 중입니다.
+                    </div>
+                  ) : isContainersError ? (
+                    <div className="px-4 py-6 text-sm text-red-600">
+                      {containersError?.message ?? "컨테이너 목록을 불러오지 못했습니다."}
+                    </div>
+                  ) : containers.length === 0 ? (
                     <div className="px-4 py-6 text-sm text-slate-500">
                       표시할 컨테이너가 없습니다.
                     </div>
@@ -196,7 +189,7 @@ export default function Dashboard() {
                       {containers.map((container) => (
                         <li
                           key={container.id}
-                          className="grid grid-cols-3 items-center px-4 py-3 text-sm"
+                          className="grid grid-cols-4 items-center px-4 py-3 text-sm"
                         >
                           <span className="font-medium text-slate-900">
                             {container.name}
@@ -206,10 +199,15 @@ export default function Dashboard() {
                             className={
                               container.status === "running"
                                 ? "font-medium text-green-600"
+                                : container.status === "restarting"
+                                ? "font-medium text-yellow-600"
                                 : "font-medium text-red-500"
                             }
                           >
                             {container.status}
+                          </span>
+                          <span className="text-slate-500">
+                            {formatUpdatedAt(container.updated_at)}
                           </span>
                         </li>
                       ))}
