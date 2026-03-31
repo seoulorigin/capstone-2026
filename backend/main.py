@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from backend.routers import auth, project
 
-app = FastAPI(title="Docker Compose Manager")
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,6 +16,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 라우터 등록
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(project.router, prefix="/projects", tags=["projects"])
+
 @app.get("/")
 async def root():
-    return {"message": "Docker Compose Manager API"}
+    return {"message": "Capstone API Server is running"}
