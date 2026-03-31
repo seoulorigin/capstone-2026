@@ -3,7 +3,9 @@ from docker.errors import NotFound, APIError
 
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-from models.container import Container # model 생성 후 수정 예정
+
+# model 생성 후 수정 예정
+# from models.container import Container
 
 class DockerService:
     def __init__(self):
