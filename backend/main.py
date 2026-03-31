@@ -4,16 +4,14 @@ from backend.routers import auth, project
 
 app = FastAPI()
 
-# 프론트엔드 서버 주소 허용
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,  # 프론트엔드와 쿠키를 주고받기 위해 필수
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5173",
+        "http://52.78.113.234:5173"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
