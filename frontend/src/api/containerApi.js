@@ -5,3 +5,8 @@ export async function getContainers(projectId) {
   const response = await api.get(`/projects/${projectId}/containers`)
   return response.data
 }
+// 리소스 통계 API 호출 
+export async function getContainerStats(containerId) {
+  const response = await api.get(`/containers/${containerId}/stats`)
+  return response.data
+}

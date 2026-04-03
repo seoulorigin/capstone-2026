@@ -25,4 +25,15 @@ export const handlers = [
       containers: containersByProject[projectId] ?? [],
     })
   }),
+  // 리소스 통계 Mock 응답 
+  http.get("/containers/:containerId/stats", ({ params }) => {
+    const containerId = Number(params.containerId)
+    return HttpResponse.json({
+      container_id: containerId,
+      cpu_percent: (Math.random() * 25).toFixed(1), // 실시간 느낌을 위한 랜덤값
+      memory_mb: 320.5,
+      memory_limit_mb: 1024.0,
+      timestamp: new Date().toISOString(),
+    })
+  }),
 ]
