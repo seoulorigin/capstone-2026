@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class ContainerStatResponse(BaseModel) :
-    container_id : int
+    container_id : str
     cpu_percent : float
     memory_mb : float
     memory_limit_mb: float 
