@@ -65,7 +65,6 @@ def get_container(container_id: str, db: Session = Depends(get_db)):
 
 
 # 컨테이너 실행
->>>>>>> develop
 @router.post("/{container_id}/start")
 def start_container(container_id: str):
     try:
