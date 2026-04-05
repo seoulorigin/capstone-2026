@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import get_db
-from services.docker_service import DockerService
+from backend.database import get_db
+from backend.services.docker_service import DockerService
 from docker.errors import NotFound, APIError
 
 # container router 설정
