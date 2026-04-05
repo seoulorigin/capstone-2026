@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from routers import auth, project, container
+
 
 app = FastAPI()
 
@@ -9,8 +11,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
-        "http://localhost:5173",
-        "http://52.78.113.234:5173"],
+        "http://localhost:8000",
+        "http://52.78.113.234:5173",
+        "http://52.78.113.234:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -19,7 +22,9 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(project.router, prefix="/projects", tags=["projects"])
-app.include_router(container.router, prefix="/containers")
+
+app.include_router(container.router, prefix="/container", tags=["container"])
+
 
 @app.get("/")
 async def root():

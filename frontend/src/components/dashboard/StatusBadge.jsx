@@ -1,12 +1,18 @@
-// 컨테이너 상태값에 따라 색상을 다르게 표시하는 컴포넌트
 
+// 컨테이너 상태값에 따라 다른 색상의 텍스트를 표시
 export default function StatusBadge({ status }) {
+  const normalizedStatus = String(status ?? "").toLowerCase()
+
   const statusClassName =
-    status === "running"
+    normalizedStatus === "running"
       ? "font-medium text-green-600"
-      : status === "restarting"
+      : normalizedStatus === "restarting"
       ? "font-medium text-yellow-600"
+      : normalizedStatus === "stopped" ||
+        normalizedStatus === "exited" ||
+        normalizedStatus === "paused"
+      ? "font-medium text-slate-500"
       : "font-medium text-red-500"
 
-  return <span className={statusClassName}>{status}</span>
+  return <span className={statusClassName}>{status ?? "unknown"}</span>
 }

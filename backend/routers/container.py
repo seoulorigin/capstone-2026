@@ -8,12 +8,12 @@ from schemas.container import ContainerStatResponse
 from services.docker_service import DockerService
 from docker.errors import NotFound, APIError
 
-
-router = APIRouter(tags=["monitoring"])
+# container router 설정
+router = APIRouter()
 
 docker_service = DockerService()
 
-# 간단 도커 목록 및 조회 테스트 
+# 간단 도커 목록 및 조회 테스트 (DB 없이)
 @router.get("/test")
 def get_list():
     try:
@@ -29,6 +29,9 @@ def get_list():
         ]
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
+
+
+
 
 # 컨테이너 목록 조회 (DB 동기화 포함)
 @router.get("/")
@@ -48,6 +51,7 @@ def get_containers(db: Session = Depends(get_db)):
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
+
 # 단일 컨테이너 상태 조회
 @router.get("/{container_id}")
 def get_container(container_id: str, db: Session = Depends(get_db)):
@@ -59,7 +63,9 @@ def get_container(container_id: str, db: Session = Depends(get_db)):
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
-# 컨테이너 실행 
+
+# 컨테이너 실행
+>>>>>>> develop
 @router.post("/{container_id}/start")
 def start_container(container_id: str):
     try:
@@ -69,7 +75,8 @@ def start_container(container_id: str):
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
-# 컨테이너 종료 
+
+# 컨테이너 종료
 @router.post("/{container_id}/stop")
 def stop_container(container_id: str):
     try:
@@ -79,7 +86,8 @@ def stop_container(container_id: str):
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
-# 컨테이너 재시작 
+
+# 컨테이너 재시작
 @router.post("/{container_id}/restart")
 def restart_container(container_id: str):
     try:
@@ -89,7 +97,8 @@ def restart_container(container_id: str):
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
-# 7. Docker 소켓 연결 상태 확인 (Health Check)
+
+# Docker 소켓 연결 상태 확인
 @router.get("/health/ping")
 def ping():
     try:
@@ -107,10 +116,11 @@ async def get_container_stats(container_id: str):
 # 특정 컨테이너의 CPU, 메모리 사용량을 반환
 # 현재는 시뮬레이션을 위해 랜덤 데이터를 생성
 
-return {
-    "container_id": container_id,
-    "cpu_percent": round(random.uniform(5.0, 25.0), 1),
-    "memory_mb": round(random.uniform(200.0, 400.0), 1),
-    "memory_limit_mb": 1024.0,
-    "timestamp": datetime.utcnow()
-}
+    return {
+        "container_id": container_id,
+        "cpu_percent": round(random.uniform(5.0, 25.0), 1),
+        "memory_mb": round(random.uniform(200.0, 400.0), 1),
+        "memory_limit_mb": 1024.0,
+        "timestamp": datetime.utcnow()
+    }
+

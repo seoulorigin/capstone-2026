@@ -7,9 +7,9 @@ from alembic import context
 
 import sys
 sys.path.append('.')
-from database import Base
-from models.project import Project
-from models import *
+from backend.database import Base
+from backend.models.project import Project
+from backend.models import *
 
 target_metadata = Base.metadata
 
