@@ -1,18 +1,23 @@
-
-// 컨테이너 상태값에 따라 다른 색상의 텍스트를 표시
+// 컨테이너 상태값에 따라 다른 색상의 배지를 표시
 export default function StatusBadge({ status }) {
   const normalizedStatus = String(status ?? "").toLowerCase()
 
-  const statusClassName =
+  const badgeClassName =
     normalizedStatus === "running"
-      ? "font-medium text-green-600"
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
       : normalizedStatus === "restarting"
-      ? "font-medium text-yellow-600"
+      ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
       : normalizedStatus === "stopped" ||
         normalizedStatus === "exited" ||
         normalizedStatus === "paused"
-      ? "font-medium text-slate-500"
-      : "font-medium text-red-500"
+      ? "border-slate-700 bg-slate-800 text-slate-300"
+      : "border-rose-500/30 bg-rose-500/10 text-rose-300"
 
-  return <span className={statusClassName}>{status ?? "unknown"}</span>
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium capitalize tracking-wide ${badgeClassName}`}
+    >
+      {status ?? "unknown"}
+    </span>
+  )
 }
