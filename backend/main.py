@@ -9,9 +9,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
-        "http://localhost:8000",
-        "http://52.78.113.234:5173",
-        "http://52.78.113.234:8000"],
+        "http://localhost:5173",
+        "http://52.78.113.234:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,7 +19,7 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(project.router, prefix="/projects", tags=["projects"])
-app.include_router(container.router, prefix="/container", tags=["container"])
+app.include_router(container.router, prefix="/containers", tags=["containers"])
 
 @app.get("/")
 async def root():

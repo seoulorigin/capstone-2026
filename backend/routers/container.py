@@ -42,6 +42,17 @@ def get_containers(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
 
+# 컨테이너 CPU/메모리 사용량 조회
+@router.get("/{container_id}/stats")
+def get_container_stats(container_id: str):
+    try:
+        return docker_service.get_container_stats(container_id)
+    except NotFound:
+        raise HTTPException(status_code=404, detail="컨테이너를 찾을 수 없습니다.")
+    except APIError as e:
+        raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
+
+
 # 단일 컨테이너 상태 조회
 @router.get("/{container_id}")
 def get_container(container_id: str, db: Session = Depends(get_db)):
