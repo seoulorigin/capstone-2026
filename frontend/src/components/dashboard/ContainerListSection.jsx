@@ -1,12 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import StatusBadge from "@/components/dashboard/StatusBadge"
 
-// 컨테이너 목록과 상태를 로딩/에러/빈 상태에 맞게 표시
+// 컨테이너 목록과 상태를 표시하고 선택된 컨테이너를 강조
 export default function ContainerListSection({
   containers,
   isLoading,
   isError,
   error,
+  selectedContainerId,
+  onSelectContainer,
 }) {
   return (
     <section>
@@ -21,7 +23,8 @@ export default function ContainerListSection({
               현재 서버의 컨테이너 상태를 조회합니다.
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              issue 1에서는 실제 API와 연결된 목록/상태 조회를 우선 반영합니다.
+              선택한 컨테이너의 리소스 메트릭은 하단 상세 정보에서 확인할 수
+              있습니다.
             </p>
           </div>
 
@@ -46,18 +49,30 @@ export default function ContainerListSection({
               </div>
             ) : (
               <ul className="divide-y">
-                {containers.map((container) => (
-                  <li
-                    key={container.container_id ?? container.id}
-                    className="grid grid-cols-3 items-center px-4 py-3 text-sm"
-                  >
-                    <span className="font-medium text-slate-900">
-                      {container.name}
-                    </span>
-                    <span className="text-slate-600">{container.image}</span>
-                    <StatusBadge status={container.status} />
-                  </li>
-                ))}
+                {containers.map((container) => {
+                  const currentId = container.container_id ?? container.id
+                  const isSelected = selectedContainerId === currentId
+
+                  return (
+                    <li key={currentId}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectContainer(container)}
+                        className={`grid w-full grid-cols-3 items-center px-4 py-3 text-left text-sm transition ${
+                          isSelected
+                            ? "bg-slate-100"
+                            : "bg-white hover:bg-slate-50"
+                        }`}
+                      >
+                        <span className="font-medium text-slate-900">
+                          {container.name}
+                        </span>
+                        <span className="text-slate-600">{container.image}</span>
+                        <StatusBadge status={container.status} />
+                      </button>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
