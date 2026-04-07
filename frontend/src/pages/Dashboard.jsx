@@ -21,6 +21,7 @@ export default function Dashboard() {
     ? containerData
     : containerData?.containers ?? []
 
+  // 컨테이너 목록이 로드되면 첫 번째 컨테이너를 기본 선택한다.
   useEffect(() => {
     if (containers.length > 0 && !selectedContainer) {
       setSelectedContainer(containers[0])

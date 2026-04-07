@@ -299,9 +299,7 @@ function MetricInfoCard({ label, value }) {
   const tone = getMetricCardTone(label)
 
   return (
-    <div
-      className={`rounded-2xl border p-4 shadow-sm ${tone.panelToneClass}`}
-    >
+    <div className={`rounded-2xl border p-4 shadow-sm ${tone.panelToneClass}`}>
       <div className="flex items-center gap-2">
         <span className={`h-2 w-2 rounded-full ${tone.dotClassName}`} />
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">

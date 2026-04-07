@@ -6,7 +6,7 @@ export default function MetricDonutChart({
   percent,
   primaryText,
   secondaryText,
-  color,
+  color = "#2563eb",
 }) {
   const safePercent = Number.isFinite(percent)
     ? Math.max(0, Math.min(100, Number(percent.toFixed(1))))
@@ -21,9 +21,7 @@ export default function MetricDonutChart({
   ]
 
   return (
-    <div
-      className={`rounded-2xl border p-4 shadow-sm ${panelToneClass}`}
-    >
+    <div className={`rounded-2xl border p-4 shadow-sm ${panelToneClass}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
