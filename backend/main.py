@@ -27,8 +27,6 @@ app.include_router(container.router, prefix="/container", tags=["container"])
 
 
 @app.get("/")
-async def root():
-    return {"message": "Capstone API Server is running"}
 def read_root():
     return {"message": "Capstone 2026 API Server is running"}
 
