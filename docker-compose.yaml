@@ -19,6 +19,7 @@ services:
       - ./backend:/app
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      - PYTHONPATH=/backend # 컨테이너 내 소스 코드가 위치한 절대 경로 
       - DATABASE_URL=sqlite:///./app.db
       - REDIS_URL=redis://redis:6379
     depends_on:

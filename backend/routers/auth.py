@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response, Cookie
 from pydantic import BaseModel
-from backend.services.session import create_session, delete_session
+from services.session import create_session, delete_session
 
 router = APIRouter()
 
