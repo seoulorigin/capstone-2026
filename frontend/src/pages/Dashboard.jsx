@@ -1,15 +1,12 @@
-import { useEffect, useMemo, useState } from "react"
 import MainLayout from "@/layouts/MainLayout"
 import { useContainers } from "@/hooks/useContainers"
 import ContainerListSection from "@/components/dashboard/ContainerListSection"
 import DetailPanelSection from "@/components/dashboard/DetailPanelSection"
+import { useDashboardState } from "@/features/dashboard/hooks/useDashboardState"
+import { useContainerSummary } from "@/features/dashboard/hooks/useContainerSummary"
 
-// 대시보드에서 컨테이너 목록과 선택된 컨테이너의 상세 정보를 함께 관리한다.
+// 컨테이너 데이터를 기반으로 대시보드 화면을 구성하는 페이지 컴포넌트
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("metrics")
-  const [selectedContainer, setSelectedContainer] = useState(null)
-  const [activeMenu, setActiveMenu] = useState("dashboard")
-
   const {
     data: containerData,
     isLoading: isContainersLoading,
@@ -17,37 +14,24 @@ export default function Dashboard() {
     error: containersError,
   } = useContainers()
 
+  // 컨테이너 데이터를 배열 형태로 정규화
   const containers = Array.isArray(containerData)
     ? containerData
     : containerData?.containers ?? []
 
-  // 컨테이너 목록이 로드되면 첫 번째 컨테이너를 기본 선택한다.
-  useEffect(() => {
-    if (containers.length > 0 && !selectedContainer) {
-      setSelectedContainer(containers[0])
-    }
-  }, [containers, selectedContainer])
+  // 선택 상태 및 UI 상태를 관리하는 커스텀 hook
+  const {
+    activeTab,
+    setActiveTab,
+    activeMenu,
+    setActiveMenu,
+    selectedContainer,
+    setSelectedContainer,
+    selectedContainerId,
+  } = useDashboardState(containers)
 
-  const selectedContainerId =
-    selectedContainer?.container_id ?? selectedContainer?.id ?? null
-
-  const summary = useMemo(() => {
-    const total = containers.length
-    const running = containers.filter(
-      (container) => String(container.status ?? "").toLowerCase() === "running"
-    ).length
-    const restarting = containers.filter(
-      (container) =>
-        String(container.status ?? "").toLowerCase() === "restarting"
-    ).length
-    const inactive = containers.filter((container) =>
-      ["stopped", "exited", "paused"].includes(
-        String(container.status ?? "").toLowerCase()
-      )
-    ).length
-
-    return { total, running, restarting, inactive }
-  }, [containers])
+  // 컨테이너 상태 요약 정보 계산 (overview 카드용)
+  const summary = useContainerSummary(containers)
 
   return (
     <MainLayout activeMenu={activeMenu} onChangeMenu={setActiveMenu}>
