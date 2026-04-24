@@ -25,10 +25,10 @@ export async function getContainers() {
 
 export async function getContainerStats(containerId) {
   if (USE_STATS_MOCK) {
-    const response = await axios.get(`/containers/${containerId}/stats`)
+    const response = await axios.get(`/container/${containerId}/stats`)
     return response.data
   }
 
-  const response = await api.get(`/containers/${containerId}/stats`)
+  const response = await api.get(`/container/${containerId}/stats`)
   return response.data
 }

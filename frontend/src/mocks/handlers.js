@@ -29,7 +29,7 @@ export const handlers = [
   }),
 
   // 선택된 컨테이너의 mock 리소스 메트릭 응답
-  http.get("/containers/:containerId/stats", ({ params }) => {
+  http.get("/container/:containerId/stats", ({ params }) => {
     const containerId = String(params.containerId)
     const tick = getNextTick(containerId)
 
