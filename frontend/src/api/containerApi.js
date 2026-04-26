@@ -1,26 +1,34 @@
 import { api } from "./client"
 import axios from "axios"
+import { mockContainers } from "@/mocks/data/containers"
 
-const USE_MOCK = true
+// env 기반 설정 유지
+const USE_CONTAINERS_MOCK =
+  import.meta.env.VITE_USE_CONTAINERS_MOCK === "true"
 
-// 컨테이너 목록을 실제 API에서 조회하고
-// 미완성 상태에서는 테스트 API로 대체
+const USE_STATS_MOCK =
+  import.meta.env.VITE_USE_STATS_MOCK !== "false"
+
 export async function getContainers() {
+  if (USE_CONTAINERS_MOCK) {
+    return mockContainers
+  }
+
   try {
     const response = await api.get("/container/")
     return response.data
   } catch (e) {
-    // fallback
     const response = await api.get("/container/test")
     return response.data
   }
 }
 
-// 선택된 컨테이너의 리소스 메트릭을 조회
 export async function getContainerStats(containerId) {
-  const response = USE_MOCK
-    ? await axios.get(`/containers/${containerId}/stats`)
-    : await api.get(`/containers/${containerId}/stats`)
+  if (USE_STATS_MOCK) {
+    const response = await axios.get(`/container/${containerId}/stats`)
+    return response.data
+  }
 
+  const response = await api.get(`/container/${containerId}/stats`)
   return response.data
 }
