@@ -91,3 +91,67 @@ class DockerService:
             "memory_limit_mb": round(memory_limit / (1024 ** 2), 2),
             "memory_percent": round(memory_percent, 2),
         }
+    
+    # 컨테이너 logs 가져오기 (ver. raw)
+    def get_container_logs(self, container_id: str, tail: int = 100, timestamps: bool = True) -> str:
+        # : param tail : 출력할 마지막 로그의 줄 수 (default: 100)
+        container = self.client.containers.get(container_id)
+
+        log_bytes = container.logs(
+            stdout=True,
+            stderr=True,
+            tail=tail,
+            timestamps=timestamps,
+            stream=False
+        )
+
+        return log_bytes.decode('utf-8', errors='replace')
+
+    # 컨테이너 logs 가져오기 (ver. JSON 구조화)
+    def get_container_logs_json(self, container_id: str, tail: int = 100, timestamps: bool = True) -> list:
+        # : param tail : 출력할 마지막 로그의 줄 수 (default: 100)
+
+        container = self.client.containers.get(container_id)
+        
+        log_bytes = container.logs(
+            stdout=True,
+            stderr=True,
+            tail=tail,
+            timestamps=timestamps
+            stream=False
+        )
+        
+        raw_lines = log_bytes.decode('utf-8', errors='replace').strip().split('\n')
+        
+        parsed_logs = []
+        for line in raw_lines:
+            if not line:
+                continue
+            
+            # 첫 번째 공백을 기준으로 타임스탬프와 메시지를 분리
+            parts = line.split(" ", 1)
+            
+            timestamp_str = parts[0]
+            message = parts[1] if len(parts) > 1 else ""
+            
+            # 로그 레벨 추출
+            # !로직 수정 필요!
+            msg_upper = message.upper()
+            level = "INFO" # 기본값
+            
+            if "ERROR" in msg_upper or "ERR" in msg_upper or "EXCEPTION" in msg_upper:
+                level = "ERROR"
+            elif "WARN" in msg_upper:
+                level = "WARN"
+            elif "DEBUG" in msg_upper:
+                level = "DEBUG"
+            else:
+                level = "ETC" # 수정 필요
+                
+            parsed_logs.append({
+                "timestamp": timestamp_str,
+                "level": level,
+                "message": message.strip()
+            })
+            
+        return parsed_logs
