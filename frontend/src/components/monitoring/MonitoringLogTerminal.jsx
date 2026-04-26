@@ -1,9 +1,28 @@
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import ToolbarChip from "@/components/dashboard/ToolbarChip"
-import LogLine from "@/components/dashboard/LogLine"
-import { CONTAINER_LOG_PREVIEW } from "@/mocks/data/containerLogs"
+import { useMockContainerLogs } from "@/hooks/useMockContainerLogs"
 
 export default function MonitoringLogTerminal({ selectedContainer }) {
+  const [activeStream, setActiveStream] = useState("all")
+  const terminalRef = useRef(null)
+
+  const { logs, isPaused, clearLogs, togglePause } =
+    useMockContainerLogs(selectedContainer)
+
+  const filteredLogs = useMemo(() => {
+    if (activeStream === "all") return logs
+
+    return logs.filter((log) => log.stream === activeStream)
+  }, [logs, activeStream])
+
+  useEffect(() => {
+    if (!terminalRef.current || isPaused) return
+
+    terminalRef.current.scrollTop = terminalRef.current.scrollHeight
+  }, [filteredLogs, isPaused])
+
   return (
     <Card className="rounded-2xl border-slate-800 bg-slate-900 text-slate-100 shadow-sm">
       <CardHeader className="space-y-3">
@@ -17,9 +36,21 @@ export default function MonitoringLogTerminal({ selectedContainer }) {
             </p>
           </div>
 
-          <span className="w-fit rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-400">
-            mock logs
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-fit rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-400">
+              mock stream
+            </span>
+
+            <span
+              className={`w-fit rounded-full border px-3 py-1 text-xs ${
+                isPaused
+                  ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
+                  : "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+              }`}
+            >
+              {isPaused ? "paused" : "connected"}
+            </span>
+          </div>
         </div>
       </CardHeader>
 
@@ -49,35 +80,90 @@ export default function MonitoringLogTerminal({ selectedContainer }) {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-400">
-                  preview
-                </span>
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-                  connected
-                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={togglePause}
+                  className="h-8 border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 transition-all duration-150 hover:-translate-y-[1px] hover:bg-slate-800 hover:text-slate-50"
+                >
+                  {isPaused ? "재개" : "일시정지"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={clearLogs}
+                  className="h-8 border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 transition-all duration-150 hover:-translate-y-[1px] hover:bg-slate-800 hover:text-slate-50"
+                >
+                  지우기
+                </Button>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 bg-slate-950/60 px-4 py-3">
-              <ToolbarChip label="stdout" active />
-              <ToolbarChip label="stderr" />
-              <ToolbarChip label="자동 스크롤" active />
-              <ToolbarChip label="필터 예정" />
+              <button type="button" onClick={() => setActiveStream("all")}>
+                <ToolbarChip label="all" active={activeStream === "all"} />
+              </button>
+
+              <button type="button" onClick={() => setActiveStream("stdout")}>
+                <ToolbarChip
+                  label="stdout"
+                  active={activeStream === "stdout"}
+                />
+              </button>
+
+              <button type="button" onClick={() => setActiveStream("stderr")}>
+                <ToolbarChip
+                  label="stderr"
+                  active={activeStream === "stderr"}
+                />
+              </button>
+
+              <ToolbarChip label="자동 스크롤" active={!isPaused} />
+              <ToolbarChip label="WS 예정" />
             </div>
 
-            <div className="max-h-[360px] space-y-2 overflow-y-auto bg-[#020617] p-4 font-mono text-sm">
-              {CONTAINER_LOG_PREVIEW.map((log, index) => (
-                <LogLine
-                  key={`${log.time}-${log.level}-${index}`}
-                  time={log.time}
-                  level={log.level}
-                  message={log.message}
-                />
-              ))}
+            <div
+              ref={terminalRef}
+              className="max-h-[380px] min-h-[280px] space-y-2 overflow-y-auto bg-[#020617] p-4 font-mono text-sm"
+            >
+              {filteredLogs.length === 0 ? (
+                <div className="rounded-xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-slate-500">
+                  표시할 로그가 없습니다.
+                </div>
+              ) : (
+                filteredLogs.map((log, index) => (
+                  <MonitoringLogLine
+                    key={`${log.time}-${log.stream}-${index}`}
+                    time={log.time}
+                    stream={log.stream}
+                    message={log.message}
+                  />
+                ))
+              )}
             </div>
           </div>
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function MonitoringLogLine({ time, stream, message }) {
+  const streamClassName =
+    stream === "stderr" ? "text-rose-300" : "text-cyan-300"
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-950/80 px-4 py-3">
+      <div className="flex flex-col gap-1 md:flex-row md:items-start md:gap-3">
+        <span className="shrink-0 text-xs text-slate-500">{time}</span>
+
+        <span className={`shrink-0 text-xs font-semibold ${streamClassName}`}>
+          {stream}
+        </span>
+
+        <p className="min-w-0 text-sm text-slate-300">{message}</p>
+      </div>
+    </div>
   )
 }
