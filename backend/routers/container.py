@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from datetime import datetime
 import random
+import asyncio
 
 from database import get_db
 from schemas.container import ContainerStatResponse
@@ -122,4 +123,64 @@ async def get_container_stats(container_id: str):
         "memory_limit_mb": 1024.0,
         "timestamp": datetime.utcnow()
     }
+
+# 리소스 실시간 통계 조회 (Polling 대응용 - 기존 유지)
+@router.get("/{container_id}/stats", response_model=ContainerStatResponse)
+async def get_container_stats_http(container_id: str):
+    return docker_service.get_container_stats(container_id)
+
+# [Metrics WS] 엔드포인트
+@router.websocket("/ws/metrics/{container_id}")
+async def websocket_metrics(websocket: WebSocket, container_id: str):
+    await websocket.accept()
+    print(f"Metrics WS Connected: {container_id}")
+    
+    try:
+        while True:
+            # 팀원 협의안: 현재 docker_service.get_container_stats() 반환 구조 유지
+            stats = docker_service.get_container_stats(container_id)
+            
+            # 굳이 timestamp를 넣지 않아도 된다고 했지만, 
+            # 혹시 필요할 경우를 대비해 여기서 추가하거나 제외할 수 있습니다.
+            await websocket.send_json(stats)
+            
+            # 팀원 협의안: 전송 주기 3초
+            await asyncio.sleep(3)
+            
+    except WebSocketDisconnect:
+        print(f"Metrics WS Disconnected: {container_id}")
+    except Exception as e:
+        print(f"Metrics WS Error: {e}")
+        await websocket.close()
+
+# [Logs WS] 엔드포인트
+@router.websocket("/ws/logs/{container_id}")
+async def websocket_logs(websocket: WebSocket, container_id: str):
+    await websocket.accept()
+    print(f"Logs WS Connected: {container_id}")
+    
+    try:
+        # Docker SDK를 통해 로그 스트림 가져오기
+        # tail=10으로 시작 시 최근 로그 10줄을 먼저 보여줍니다.
+        log_generator = docker_service.get_container_logs(container_id)
+        
+        # log_generator는 bytes를 하나씩 내뱉는 이터레이터입니다.
+        for line in log_generator:
+            # bytes를 문자열로 디코딩
+            log_message = line.decode('utf-8').strip()
+            
+            payload = {
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "stream": "stdout",  # 실제 운영 시 stderr 구분 로직을 추가할 수 있습니다.
+                "message": log_message
+            }
+            
+            await websocket.send_json(payload)
+            # 로그는 sleep 없이 발생하는 즉시 전송합니다.
+            
+    except WebSocketDisconnect:
+        print(f"Logs WS Disconnected: {container_id}")
+    except Exception as e:
+        print(f"Logs WS Error: {e}")
+        await websocket.close()
 
