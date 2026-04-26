@@ -1,6 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import MonitoringLineChart from "@/components/monitoring/MonitoringLineChart"
+import { useMockContainerMetricHistory } from "@/hooks/useMockContainerMetricHistory"
 
 export default function MonitoringChartPanel({ selectedContainer }) {
+  const { history, latestMetric } =
+    useMockContainerMetricHistory(selectedContainer)
+
   return (
     <Card className="rounded-2xl border-slate-800 bg-slate-900 text-slate-100 shadow-sm">
       <CardHeader className="space-y-3">
@@ -10,13 +15,18 @@ export default function MonitoringChartPanel({ selectedContainer }) {
               CPU / Memory 라인차트
             </CardTitle>
             <p className="mt-2 text-sm text-slate-400">
-              선택한 컨테이너의 리소스 변화를 시간 흐름 기준으로 표시합니다.
+              선택한 컨테이너의 리소스 변화를 3초 간격 mock 데이터로 표시합니다.
             </p>
           </div>
 
-          <span className="w-fit rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
-            Recharts 준비 영역
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-fit rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+              Recharts
+            </span>
+            <span className="w-fit rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-400">
+              mock polling
+            </span>
+          </div>
         </div>
       </CardHeader>
 
@@ -26,18 +36,61 @@ export default function MonitoringChartPanel({ selectedContainer }) {
             컨테이너를 선택하면 CPU / Memory 라인차트가 표시됩니다.
           </div>
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
-            <ChartPlaceholder
-              title="CPU Usage"
-              value="--%"
-              helper="mock history 연결 예정"
-            />
+          <div className="space-y-4">
+            <div className="grid gap-4 xl:grid-cols-2">
+              <MonitoringLineChart
+                title="CPU Usage"
+                description="cpu_percent"
+                data={history}
+                dataKey="cpu_percent"
+                valueSuffix="%"
+                accentColor="#22d3ee"
+              />
 
-            <ChartPlaceholder
-              title="Memory Usage"
-              value="--%"
-              helper="mock history 연결 예정"
-            />
+              <MonitoringLineChart
+                title="Memory Usage"
+                description="memory_percent"
+                data={history}
+                dataKey="memory_percent"
+                valueSuffix="%"
+                accentColor="#22c55e"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <MetricSnapshotCard
+                label="CPU"
+                value={
+                  latestMetric
+                    ? `${latestMetric.cpu_percent.toFixed(1)}%`
+                    : "--%"
+                }
+                helper="현재 CPU 사용률"
+                tone="cyan"
+              />
+
+              <MetricSnapshotCard
+                label="Memory Used"
+                value={
+                  latestMetric
+                    ? `${latestMetric.memory_usage_mb.toFixed(1)} MB`
+                    : "-- MB"
+                }
+                helper="현재 메모리 사용량"
+                tone="emerald"
+              />
+
+              <MetricSnapshotCard
+                label="Memory Limit"
+                value={
+                  latestMetric
+                    ? `${latestMetric.memory_limit_mb.toFixed(1)} MB`
+                    : "-- MB"
+                }
+                helper="mock 기준 메모리 한도"
+                tone="slate"
+              />
+            </div>
           </div>
         )}
       </CardContent>
@@ -45,31 +98,35 @@ export default function MonitoringChartPanel({ selectedContainer }) {
   )
 }
 
-function ChartPlaceholder({ title, value, helper }) {
+function MetricSnapshotCard({ label, value, helper, tone = "slate" }) {
+  const toneClassName =
+    tone === "cyan"
+      ? "border-cyan-500/10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.10),transparent_35%),linear-gradient(to_bottom,rgba(15,23,42,0.96),rgba(2,6,23,0.96))]"
+      : tone === "emerald"
+      ? "border-emerald-500/10 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.10),transparent_35%),linear-gradient(to_bottom,rgba(15,23,42,0.96),rgba(2,6,23,0.96))]"
+      : "border-slate-700 bg-[radial-gradient(circle_at_top_left,rgba(100,116,139,0.12),transparent_35%),linear-gradient(to_bottom,rgba(15,23,42,0.96),rgba(2,6,23,0.96))]"
+
+  const dotClassName =
+    tone === "cyan"
+      ? "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]"
+      : tone === "emerald"
+      ? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]"
+      : "bg-slate-400 shadow-[0_0_10px_rgba(148,163,184,0.45)]"
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-800 bg-[linear-gradient(to_bottom,rgba(15,23,42,0.96),rgba(2,6,23,0.96))]">
-      <div className="flex items-start justify-between gap-3 border-b border-slate-800 p-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
-            Metric
-          </p>
-          <p className="mt-2 text-sm font-semibold text-slate-100">{title}</p>
-        </div>
-
-        <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-400">
-          {value}
-        </span>
+    <div className={`rounded-2xl border p-4 shadow-sm ${toneClassName}`}>
+      <div className="flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${dotClassName}`} />
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+          {label}
+        </p>
       </div>
 
-      <div className="flex h-[260px] items-center justify-center bg-slate-950/40 p-4">
-        <div className="text-center">
-          <div className="mx-auto h-14 w-14 rounded-full border border-cyan-500/20 bg-cyan-500/10 shadow-[0_0_30px_rgba(34,211,238,0.10)]" />
-          <p className="mt-4 text-sm font-medium text-slate-300">
-            LineChart Area
-          </p>
-          <p className="mt-1 text-xs text-slate-500">{helper}</p>
-        </div>
-      </div>
+      <p className="mt-4 text-3xl font-semibold tracking-tight text-slate-50">
+        {value}
+      </p>
+
+      <p className="mt-2 text-xs text-slate-500">{helper}</p>
     </div>
   )
 }
