@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import ToolbarChip from "@/components/dashboard/ToolbarChip"
-import { useMockContainerLogs } from "@/hooks/useMockContainerLogs"
+import { useContainerLogs } from "@/hooks/useContainerLogs"
 
 export default function MonitoringLogTerminal({ selectedContainer }) {
   const [activeStream, setActiveStream] = useState("all")
   const terminalRef = useRef(null)
 
   const { logs, isPaused, clearLogs, togglePause } =
-    useMockContainerLogs(selectedContainer)
+    useContainerLogs(selectedContainer)
 
   const filteredLogs = useMemo(() => {
     if (activeStream === "all") return logs

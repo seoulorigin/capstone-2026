@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import MonitoringLineChart from "@/components/monitoring/MonitoringLineChart"
-import { useMockContainerMetricHistory } from "@/hooks/useMockContainerMetricHistory"
+import { useContainerMetricHistory } from "@/hooks/useContainerMetricHistory"
 
 export default function MonitoringChartPanel({ selectedContainer }) {
   const { history, latestMetric } =
-    useMockContainerMetricHistory(selectedContainer)
+    useContainerMetricHistory(selectedContainer)
 
   return (
     <Card className="rounded-2xl border-slate-800 bg-slate-900 text-slate-100 shadow-sm">
