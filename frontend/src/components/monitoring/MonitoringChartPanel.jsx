@@ -3,7 +3,7 @@ import MonitoringLineChart from "@/components/monitoring/MonitoringLineChart"
 import { useContainerMetricHistory } from "@/hooks/useContainerMetricHistory"
 
 export default function MonitoringChartPanel({ selectedContainer }) {
-  const { history, latestMetric } =
+  const { history, latestMetric, source, connectionStatus } =
     useContainerMetricHistory(selectedContainer)
 
   return (
@@ -15,16 +15,16 @@ export default function MonitoringChartPanel({ selectedContainer }) {
               CPU / Memory 라인차트
             </CardTitle>
             <p className="mt-2 text-sm text-slate-400">
-              선택한 컨테이너의 리소스 변화를 3초 간격 mock 데이터로 표시합니다.
+              WebSocket 연결 성공 시 real 데이터를 사용하고, 연결 전에는 mock
+              fallback 데이터를 표시합니다.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <SourceBadge source={source} />
+            <ConnectionBadge status={connectionStatus} />
             <span className="w-fit rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
               Recharts
-            </span>
-            <span className="w-fit rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-400">
-              mock polling
             </span>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function MonitoringChartPanel({ selectedContainer }) {
                     ? `${latestMetric.memory_limit_mb.toFixed(1)} MB`
                     : "-- MB"
                 }
-                helper="mock 기준 메모리 한도"
+                helper="메모리 한도"
                 tone="slate"
               />
             </div>
@@ -95,6 +95,47 @@ export default function MonitoringChartPanel({ selectedContainer }) {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function SourceBadge({ source }) {
+  const className =
+    source === "real"
+      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+      : source === "mock-fallback"
+      ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
+      : "border-slate-700 bg-slate-950 text-slate-400"
+
+  const label =
+    source === "real"
+      ? "REAL WS"
+      : source === "mock-fallback"
+      ? "MOCK FALLBACK"
+      : "MOCK"
+
+  return (
+    <span className={`w-fit rounded-full border px-3 py-1 text-xs ${className}`}>
+      {label}
+    </span>
+  )
+}
+
+function ConnectionBadge({ status }) {
+  const className =
+    status === "connected"
+      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+      : status === "connecting"
+      ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
+      : status === "fallback"
+      ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
+      : status === "error"
+      ? "border-rose-500/20 bg-rose-500/10 text-rose-300"
+      : "border-slate-700 bg-slate-950 text-slate-400"
+
+  return (
+    <span className={`w-fit rounded-full border px-3 py-1 text-xs ${className}`}>
+      {status ?? "idle"}
+    </span>
   )
 }
 
