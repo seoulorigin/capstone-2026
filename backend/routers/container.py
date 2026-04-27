@@ -4,10 +4,14 @@ from datetime import datetime
 import random
 import asyncio
 
+from concurrent.futures import ThreadPoolExecutor
+
 from database import get_db
 from schemas.container import ContainerStatResponse
 from services.docker_service import DockerService
 from docker.errors import NotFound, APIError
+
+executor = ThreadPoolExecutor(max_workers=10)
 
 # container router 설정
 router = APIRouter()
@@ -157,30 +161,30 @@ async def websocket_metrics(websocket: WebSocket, container_id: str):
 @router.websocket("/ws/logs/{container_id}")
 async def websocket_logs(websocket: WebSocket, container_id: str):
     await websocket.accept()
-    print(f"Logs WS Connected: {container_id}")
+    
+    # print(f"Logs WS Connected: {container_id}")
+    loop = asyncio.get_event_loop()
     
     try:
-        # Docker SDK를 통해 로그 스트림 가져오기
-        # tail=10으로 시작 시 최근 로그 10줄을 먼저 보여줍니다.
-        log_generator = docker_service.get_container_logs(container_id)
+        log_generator = await loop.run_in_executor(
+            executor,
+            docker_service.get_container_logs,
+            container_id)
         
         # log_generator는 bytes를 하나씩 내뱉는 이터레이터입니다.
         for line in log_generator:
-            # bytes를 문자열로 디코딩
             log_message = line.decode('utf-8').strip()
             
             payload = {
                 "time": datetime.now().strftime("%H:%M:%S"),
-                "stream": "stdout",  # 실제 운영 시 stderr 구분 로직을 추가할 수 있습니다.
+                "stream": "stdout",  
                 "message": log_message
             }
             
             await websocket.send_json(payload)
-            # 로그는 sleep 없이 발생하는 즉시 전송합니다.
+            await asyncio.sleep(0.1)   
             
-    except WebSocketDisconnect:
-        print(f"Logs WS Disconnected: {container_id}")
     except Exception as e:
-        print(f"Logs WS Error: {e}")
+        print(f"로그 전송 에러: {e}")
+    finally:
         await websocket.close()
-
