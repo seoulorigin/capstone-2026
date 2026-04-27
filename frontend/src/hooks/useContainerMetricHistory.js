@@ -17,6 +17,7 @@ export function useContainerMetricHistory(selectedContainer) {
       ...mockResult,
       source: "mock",
       connectionStatus: "mock",
+      reconnect: realResult.reconnect,
     }
   }
 
@@ -43,5 +44,6 @@ export function useContainerMetricHistory(selectedContainer) {
     source: "mock-fallback",
     connectionStatus: realResult.connectionStatus,
     realError: realResult.error,
+    reconnect: realResult.reconnect,
   }
 }

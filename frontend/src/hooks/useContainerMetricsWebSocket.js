@@ -8,8 +8,9 @@ function getContainerId(container) {
 }
 
 function normalizeMetricPayload(payload, selectedContainer) {
-  const memoryUsageMb =
-    Number(payload?.memory_usage_mb ?? payload?.memory_mb ?? 0)
+  const memoryUsageMb = Number(
+    payload?.memory_usage_mb ?? payload?.memory_mb ?? 0
+  )
 
   const memoryLimitMb = Number(payload?.memory_limit_mb ?? 0)
 
@@ -24,7 +25,9 @@ function normalizeMetricPayload(payload, selectedContainer) {
     id: payload?.id ?? payload?.container_id ?? getContainerId(selectedContainer),
     name: payload?.name ?? selectedContainer?.name ?? "unknown-container",
     status: payload?.status ?? selectedContainer?.status ?? "unknown",
-    time: payload?.time ?? new Date(payload?.timestamp ?? Date.now()).toLocaleTimeString(),
+    time:
+      payload?.time ??
+      new Date(payload?.timestamp ?? Date.now()).toLocaleTimeString(),
     timestamp: payload?.timestamp ?? new Date().toISOString(),
     cpu_percent: clampMetric(Number(payload?.cpu_percent ?? 0)),
     memory_usage_mb: Number(memoryUsageMb.toFixed(1)),
@@ -43,6 +46,7 @@ export function useContainerMetricsWebSocket(selectedContainer) {
   const [latestMetric, setLatestMetric] = useState(null)
   const [connectionStatus, setConnectionStatus] = useState("idle")
   const [error, setError] = useState(null)
+  const [reconnectKey, setReconnectKey] = useState(0)
 
   const containerId = useMemo(() => {
     return getContainerId(selectedContainer)
@@ -114,7 +118,11 @@ export function useContainerMetricsWebSocket(selectedContainer) {
         socket.close()
       }
     }
-  }, [containerId, selectedContainer])
+  }, [containerId, selectedContainer, reconnectKey])
+
+  function reconnect() {
+    setReconnectKey((current) => current + 1)
+  }
 
   return {
     history,
@@ -123,5 +131,6 @@ export function useContainerMetricsWebSocket(selectedContainer) {
     error,
     isMock: false,
     isConnected: connectionStatus === "connected",
+    reconnect,
   }
 }

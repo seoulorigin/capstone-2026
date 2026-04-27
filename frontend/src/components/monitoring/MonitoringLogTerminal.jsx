@@ -16,6 +16,7 @@ export default function MonitoringLogTerminal({ selectedContainer }) {
     togglePause,
     source,
     connectionStatus,
+    reconnect,
   } = useContainerLogs(selectedContainer)
 
   const filteredLogs = useMemo(() => {
@@ -36,6 +37,8 @@ export default function MonitoringLogTerminal({ selectedContainer }) {
           source={source}
           connectionStatus={connectionStatus}
           isPaused={isPaused}
+          selectedContainer={selectedContainer}
+          onReconnect={reconnect}
         />
       </CardHeader>
 
@@ -55,10 +58,7 @@ export default function MonitoringLogTerminal({ selectedContainer }) {
               onClearLogs={clearLogs}
             />
 
-            <MonitoringLogBody
-              ref={terminalRef}
-              logs={filteredLogs}
-            />
+            <MonitoringLogBody ref={terminalRef} logs={filteredLogs} />
           </div>
         )}
       </CardContent>

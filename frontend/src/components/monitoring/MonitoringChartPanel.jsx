@@ -1,10 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import MonitoringLineChart from "@/components/monitoring/MonitoringLineChart"
+import MonitoringSourceBadge from "@/components/monitoring/MonitoringSourceBadge"
+import MonitoringConnectionBadge from "@/components/monitoring/MonitoringConnectionBadge"
 import { useContainerMetricHistory } from "@/hooks/useContainerMetricHistory"
 
 export default function MonitoringChartPanel({ selectedContainer }) {
-  const { history, latestMetric, source, connectionStatus } =
-    useContainerMetricHistory(selectedContainer)
+  const {
+    history,
+    latestMetric,
+    source,
+    connectionStatus,
+    reconnect,
+  } = useContainerMetricHistory(selectedContainer)
 
   return (
     <Card className="rounded-2xl border-slate-800 bg-slate-900 text-slate-100 shadow-sm">
@@ -21,11 +29,22 @@ export default function MonitoringChartPanel({ selectedContainer }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <SourceBadge source={source} />
-            <ConnectionBadge status={connectionStatus} />
+            <MonitoringSourceBadge source={source} />
+            <MonitoringConnectionBadge status={connectionStatus} />
+
             <span className="w-fit rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
               Recharts
             </span>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={reconnect}
+              disabled={!selectedContainer || connectionStatus === "connecting"}
+              className="h-8 border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 transition-all duration-150 hover:-translate-y-[1px] hover:bg-slate-800 hover:text-slate-50 disabled:opacity-50"
+            >
+              {connectionStatus === "connecting" ? "연결 중" : "WS 재연결"}
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -95,47 +114,6 @@ export default function MonitoringChartPanel({ selectedContainer }) {
         )}
       </CardContent>
     </Card>
-  )
-}
-
-function SourceBadge({ source }) {
-  const className =
-    source === "real"
-      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
-      : source === "mock-fallback"
-      ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
-      : "border-slate-700 bg-slate-950 text-slate-400"
-
-  const label =
-    source === "real"
-      ? "REAL WS"
-      : source === "mock-fallback"
-      ? "MOCK FALLBACK"
-      : "MOCK"
-
-  return (
-    <span className={`w-fit rounded-full border px-3 py-1 text-xs ${className}`}>
-      {label}
-    </span>
-  )
-}
-
-function ConnectionBadge({ status }) {
-  const className =
-    status === "connected"
-      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
-      : status === "connecting"
-      ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
-      : status === "fallback"
-      ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
-      : status === "error"
-      ? "border-rose-500/20 bg-rose-500/10 text-rose-300"
-      : "border-slate-700 bg-slate-950 text-slate-400"
-
-  return (
-    <span className={`w-fit rounded-full border px-3 py-1 text-xs ${className}`}>
-      {status ?? "idle"}
-    </span>
   )
 }
 

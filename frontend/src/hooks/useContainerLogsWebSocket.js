@@ -9,7 +9,9 @@ function getContainerId(container) {
 
 function normalizeLogPayload(payload) {
   return {
-    time: payload?.time ?? new Date(payload?.timestamp ?? Date.now()).toLocaleTimeString(),
+    time:
+      payload?.time ??
+      new Date(payload?.timestamp ?? Date.now()).toLocaleTimeString(),
     stream: payload?.stream ?? "stdout",
     message: payload?.message ?? "",
   }
@@ -20,6 +22,7 @@ export function useContainerLogsWebSocket(selectedContainer) {
   const [isPaused, setIsPaused] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState("idle")
   const [error, setError] = useState(null)
+  const [reconnectKey, setReconnectKey] = useState(0)
 
   const containerId = useMemo(() => {
     return getContainerId(selectedContainer)
@@ -90,7 +93,7 @@ export function useContainerLogsWebSocket(selectedContainer) {
         socket.close()
       }
     }
-  }, [containerId])
+  }, [containerId, reconnectKey])
 
   function clearLogs() {
     setLogs([])
@@ -100,10 +103,12 @@ export function useContainerLogsWebSocket(selectedContainer) {
     setIsPaused((current) => !current)
   }
 
-  const visibleLogs = isPaused ? logs : logs
+  function reconnect() {
+    setReconnectKey((current) => current + 1)
+  }
 
   return {
-    logs: visibleLogs,
+    logs,
     isPaused,
     connectionStatus,
     error,
@@ -111,5 +116,6 @@ export function useContainerLogsWebSocket(selectedContainer) {
     isConnected: connectionStatus === "connected",
     clearLogs,
     togglePause,
+    reconnect,
   }
 }
