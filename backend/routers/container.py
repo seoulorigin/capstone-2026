@@ -125,38 +125,43 @@ async def get_container_stats(container_id: str):
         "cpu_percent": round(random.uniform(5.0, 25.0), 1),
         "memory_mb": round(random.uniform(200.0, 400.0), 1),
         "memory_limit_mb": 1024.0,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.now(timezone.utc)
     }
-
-# 리소스 실시간 통계 조회 (Polling 대응용 - 기존 유지)
-@router.get("/{container_id}/stats", response_model=ContainerStatResponse)
-async def get_container_stats_http(container_id: str):
-    return docker_service.get_container_stats(container_id)
 
 # [Metrics WS] 엔드포인트
 @router.websocket("/ws/metrics/{container_id}")
 async def websocket_metrics(websocket: WebSocket, container_id: str):
     await websocket.accept()
     print(f"Metrics WS Connected: {container_id}")
+
+    loop = asyncio.get_event_loop()
     
     try:
         while True:
-            # 팀원 협의안: 현재 docker_service.get_container_stats() 반환 구조 유지
-            stats = docker_service.get_container_stats(container_id)
+            stats = await loop.run_in_executor(
+                executor,
+                docker_service.get_container_stats,
+                container_id)
             
-            # 굳이 timestamp를 넣지 않아도 된다고 했지만, 
-            # 혹시 필요할 경우를 대비해 여기서 추가하거나 제외할 수 있습니다.
-            await websocket.send_json(stats)
+            if stats and stats.get("cpu_percent") is not None:
+                await websocket.send_json(stats)
+            else:
+                print(f"⚠️ 데이터 누락 혹은 0 수신: {stats}")
+                
+            await asyncio.sleep(3) 
             
-            # 팀원 협의안: 전송 주기 3초
-            await asyncio.sleep(3)
             
     except WebSocketDisconnect:
         print(f"Metrics WS Disconnected: {container_id}")
     except Exception as e:
         print(f"Metrics WS Error: {e}")
-        await websocket.close()
+    finally:
+        try:
+            await websocket.close()
+        except:
+            pass
 
+        
 # [Logs WS] 엔드포인트
 @router.websocket("/ws/logs/{container_id}")
 async def websocket_logs(websocket: WebSocket, container_id: str):
