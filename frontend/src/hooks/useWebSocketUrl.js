@@ -16,7 +16,8 @@ function convertHttpUrlToWsUrl(url) {
 
 export function getWebSocketBaseUrl() {
   const explicitWsBaseUrl = import.meta.env.VITE_WS_BASE_URL
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL
 
   if (explicitWsBaseUrl) {
     return removeTrailingSlash(explicitWsBaseUrl)

@@ -70,7 +70,9 @@ export function useContainerMetricsWebSocket(selectedContainer) {
     setError(null)
 
     try {
-      socket = new WebSocket(buildWebSocketUrl(`/ws/metrics/${containerId}`))
+      socket = new WebSocket(
+        buildWebSocketUrl(`/container/ws/metrics/${containerId}`)
+      )
     } catch (e) {
       setConnectionStatus("fallback")
       setError(e)
@@ -88,11 +90,17 @@ export function useContainerMetricsWebSocket(selectedContainer) {
 
       try {
         const payload = JSON.parse(event.data)
-        const normalizedMetric = normalizeMetricPayload(payload, selectedContainer)
+        const normalizedMetric = normalizeMetricPayload(
+          payload,
+          selectedContainer
+        )
 
         setLatestMetric(normalizedMetric)
+
         setHistory((currentHistory) => {
-          return [...currentHistory, normalizedMetric].slice(-MAX_HISTORY_LENGTH)
+          return [...currentHistory, normalizedMetric].slice(
+            -MAX_HISTORY_LENGTH
+          )
         })
       } catch (e) {
         setConnectionStatus("error")
