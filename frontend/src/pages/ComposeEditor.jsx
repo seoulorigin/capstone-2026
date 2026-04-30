@@ -5,6 +5,10 @@ import MainLayout from "@/layouts/MainLayout"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import ComposeOptionForm from "@/features/compose/components/ComposeOptionForm"
+import {
+  convertOptionsToYaml,
+  convertYamlToOptions,
+} from "@/features/compose/utils/composeYaml"
 
 const initialComposeOptions = {
   serviceName: "app",
@@ -21,6 +25,23 @@ export default function ComposeEditor() {
   const [yamlText, setYamlText] = useState(`services:
   app:
     image: nginx:latest`)
+  const [errorMessage, setErrorMessage] = useState("")
+
+  const handleOptionsToYaml = () => {
+    const nextYaml = convertOptionsToYaml(composeOptions)
+    setYamlText(nextYaml)
+    setErrorMessage("")
+  }
+
+  const handleYamlToOptions = () => {
+    try {
+      const nextOptions = convertYamlToOptions(yamlText)
+      setComposeOptions(nextOptions)
+      setErrorMessage("")
+    } catch {
+      setErrorMessage("YAML 문법 또는 지원하지 않는 Compose 구조입니다.")
+    }
+  }
 
   return (
     <MainLayout>
@@ -34,9 +55,17 @@ export default function ComposeEditor() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline">옵션 → YAML</Button>
-          <Button variant="outline">YAML → 옵션</Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" onClick={handleOptionsToYaml}>
+            옵션 → YAML
+          </Button>
+          <Button variant="outline" onClick={handleYamlToOptions}>
+            YAML → 옵션
+          </Button>
+
+          {errorMessage && (
+            <p className="text-sm text-red-400">{errorMessage}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
