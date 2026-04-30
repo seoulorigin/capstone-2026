@@ -1,95 +1,174 @@
-// Compose 옵션 → YAML / YAML → 옵션 변환 유틸
-
 import yaml from "js-yaml"
 
-// 옵션 → YAML
-export function convertOptionsToYaml(options) {
-  const {
-    serviceName,
-    image,
-    containerName,
+const DEFAULT_SERVICE_NAME = "app"
+
+function createValidationError(message) {
+  return new Error(message)
+}
+
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+}
+
+function parsePort(portValue) {
+  if (typeof portValue !== "string" && typeof portValue !== "number") {
+    throw createValidationError("ports는 문자열 또는 숫자 형식이어야 합니다.")
+  }
+
+  const portText = String(portValue)
+  const [hostPort = "", containerPort = ""] = portText.split(":")
+
+  return {
     hostPort,
-    containerPort,
-    environmentKey,
-    environmentValue,
-  } = options
+    containerPort: containerPort || hostPort,
+  }
+}
+
+function parseEnvironment(environment) {
+  if (!environment) {
+    return {
+      environmentKey: "",
+      environmentValue: "",
+    }
+  }
+
+  if (Array.isArray(environment)) {
+    const firstEnvironment = environment[0]
+
+    if (!firstEnvironment) {
+      return {
+        environmentKey: "",
+        environmentValue: "",
+      }
+    }
+
+    if (typeof firstEnvironment !== "string") {
+      throw createValidationError(
+        "environment 배열은 KEY=VALUE 문자열 형식이어야 합니다.",
+      )
+    }
+
+    const equalIndex = firstEnvironment.indexOf("=")
+
+    if (equalIndex === -1) {
+      throw createValidationError(
+        "environment 배열은 KEY=VALUE 형식이어야 합니다.",
+      )
+    }
+
+    return {
+      environmentKey: firstEnvironment.slice(0, equalIndex),
+      environmentValue: firstEnvironment.slice(equalIndex + 1),
+    }
+  }
+
+  if (isObject(environment)) {
+    const firstKey = Object.keys(environment)[0]
+
+    if (!firstKey) {
+      return {
+        environmentKey: "",
+        environmentValue: "",
+      }
+    }
+
+    return {
+      environmentKey: firstKey,
+      environmentValue: String(environment[firstKey] ?? ""),
+    }
+  }
+
+  throw createValidationError(
+    "environment는 배열 또는 객체 형식이어야 합니다.",
+  )
+}
+
+export function convertOptionsToYaml(options) {
+  const serviceName = options.serviceName?.trim() || DEFAULT_SERVICE_NAME
 
   const composeObject = {
     services: {
       [serviceName]: {
-        image: image || "",
+        image: options.image?.trim() || "",
       },
     },
   }
 
-  // container_name
-  if (containerName) {
-    composeObject.services[serviceName].container_name = containerName
+  const service = composeObject.services[serviceName]
+
+  if (options.containerName?.trim()) {
+    service.container_name = options.containerName.trim()
   }
 
-  // ports
-  if (hostPort && containerPort) {
-    composeObject.services[serviceName].ports = [
-      `${hostPort}:${containerPort}`,
-    ]
+  if (options.hostPort?.trim() && options.containerPort?.trim()) {
+    service.ports = [`${options.hostPort.trim()}:${options.containerPort.trim()}`]
   }
 
-  // environment
-  if (environmentKey && environmentValue) {
-    composeObject.services[serviceName].environment = [
-      `${environmentKey}=${environmentValue}`,
+  if (options.environmentKey?.trim() && options.environmentValue?.trim()) {
+    service.environment = [
+      `${options.environmentKey.trim()}=${options.environmentValue.trim()}`,
     ]
   }
 
   return yaml.dump(composeObject, {
     noRefs: true,
+    lineWidth: -1,
   })
 }
 
-// YAML → 옵션
 export function convertYamlToOptions(yamlText) {
-  try {
-    const parsed = yaml.load(yamlText)
+  const parsed = yaml.load(yamlText)
 
-    const services = parsed?.services || {}
-    const serviceName = Object.keys(services)[0]
+  if (!isObject(parsed)) {
+    throw createValidationError("YAML 최상위 구조는 객체여야 합니다.")
+  }
 
-    if (!serviceName) {
-      throw new Error("service 없음")
+  if (!isObject(parsed.services)) {
+    throw createValidationError("services 필드가 필요합니다.")
+  }
+
+  const serviceName = Object.keys(parsed.services)[0]
+
+  if (!serviceName) {
+    throw createValidationError("최소 1개의 service가 필요합니다.")
+  }
+
+  const service = parsed.services[serviceName]
+
+  if (!isObject(service)) {
+    throw createValidationError("service 설정은 객체 형식이어야 합니다.")
+  }
+
+  if (!service.image || typeof service.image !== "string") {
+    throw createValidationError("service에는 image 문자열이 필요합니다.")
+  }
+
+  let hostPort = ""
+  let containerPort = ""
+
+  if (service.ports) {
+    if (!Array.isArray(service.ports)) {
+      throw createValidationError("ports는 배열 형식이어야 합니다.")
     }
 
-    const service = services[serviceName]
-
-    // ports 파싱
-    let hostPort = ""
-    let containerPort = ""
-
-    if (service.ports && service.ports.length > 0) {
-      const [host, container] = service.ports[0].split(":")
-      hostPort = host
-      containerPort = container
+    if (service.ports.length > 0) {
+      const parsedPort = parsePort(service.ports[0])
+      hostPort = parsedPort.hostPort
+      containerPort = parsedPort.containerPort
     }
+  }
 
-    // environment 파싱
-    let environmentKey = ""
-    let environmentValue = ""
+  const { environmentKey, environmentValue } = parseEnvironment(
+    service.environment,
+  )
 
-    if (service.environment && service.environment.length > 0) {
-      const [key, value] = service.environment[0].split("=")
-      environmentKey = key
-      environmentValue = value
-    }
-
-    return {
-      serviceName,
-      image: service.image || "",
-      containerName: service.container_name || "",
-      hostPort,
-      containerPort,
-      environmentKey,
-      environmentValue,
-    }
-  } catch (error) {
-    throw new Error("YAML 파싱 실패")
+  return {
+    serviceName,
+    image: service.image,
+    containerName: service.container_name || "",
+    hostPort,
+    containerPort,
+    environmentKey,
+    environmentValue,
   }
 }
