@@ -41,7 +41,7 @@ export default function MonitoringLineChart({
 
       <div className="h-[280px] bg-slate-950/40 p-4">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 12, right: 16, bottom: 0, left: -18 }}>
+          <LineChart data={data} margin={{ top: 12, right: 16, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id={`${dataKey}-gradient`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={accentColor} stopOpacity={0.28} />
@@ -61,10 +61,11 @@ export default function MonitoringLineChart({
 
             <YAxis
               domain={[0, 100]}
+              ticks={[0, 25, 50, 75, 100]}
               tick={{ fill: "#64748b", fontSize: 11 }}
               tickLine={false}
               axisLine={false}
-              width={42}
+              width={48}
               tickFormatter={(value) => `${value}%`}
             />
 

@@ -46,7 +46,9 @@ export function useContainerLogsWebSocket(selectedContainer) {
     setError(null)
 
     try {
-      socket = new WebSocket(buildWebSocketUrl(`/ws/logs/${containerId}`))
+      socket = new WebSocket(
+        buildWebSocketUrl(`/container/ws/logs/${containerId}`)
+      )
     } catch (e) {
       setConnectionStatus("fallback")
       setError(e)

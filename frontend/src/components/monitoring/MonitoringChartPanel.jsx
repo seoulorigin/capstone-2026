@@ -3,16 +3,18 @@ import { Button } from "@/components/ui/button"
 import MonitoringLineChart from "@/components/monitoring/MonitoringLineChart"
 import MonitoringSourceBadge from "@/components/monitoring/MonitoringSourceBadge"
 import MonitoringConnectionBadge from "@/components/monitoring/MonitoringConnectionBadge"
-import { useContainerMetricHistory } from "@/hooks/useContainerMetricHistory"
 
-export default function MonitoringChartPanel({ selectedContainer }) {
+export default function MonitoringChartPanel({
+  selectedContainer,
+  metricsResult,
+}) {
   const {
-    history,
-    latestMetric,
-    source,
-    connectionStatus,
-    reconnect,
-  } = useContainerMetricHistory(selectedContainer)
+    history = [],
+    latestMetric = null,
+    source = "mock-fallback",
+    connectionStatus = "idle",
+    reconnect = () => {},
+  } = metricsResult ?? {}
 
   return (
     <Card className="rounded-2xl border-slate-800 bg-slate-900 text-slate-100 shadow-sm">

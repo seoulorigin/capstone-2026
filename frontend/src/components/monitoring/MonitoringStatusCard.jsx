@@ -1,10 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import StatusBadge from "@/components/dashboard/StatusBadge"
 import InfoChip from "@/components/dashboard/InfoChip"
+import MonitoringConnectionBadge from "@/components/monitoring/MonitoringConnectionBadge"
+import MonitoringSourceBadge from "@/components/monitoring/MonitoringSourceBadge"
 
-export default function MonitoringStatusCard({ selectedContainer }) {
+export default function MonitoringStatusCard({
+  selectedContainer,
+  metricsResult,
+  logsResult,
+}) {
   const containerId =
     selectedContainer?.container_id ?? selectedContainer?.id ?? "-"
+
+  const metricsStatus = metricsResult?.connectionStatus ?? "idle"
+  const metricsSource = metricsResult?.source ?? "mock-fallback"
+
+  const logsStatus = logsResult?.connectionStatus ?? "idle"
+  const logsSource = logsResult?.source ?? "mock-fallback"
+
+  const overallStatus = getOverallStatus(metricsStatus, logsStatus)
 
   return (
     <Card className="rounded-2xl border-slate-800 bg-slate-900 text-slate-100 shadow-sm">
@@ -15,13 +29,11 @@ export default function MonitoringStatusCard({ selectedContainer }) {
               선택 컨테이너 정보
             </CardTitle>
             <p className="mt-2 text-sm text-slate-400">
-              현재 선택된 컨테이너와 WebSocket 연결 준비 상태를 표시합니다.
+              현재 선택된 컨테이너와 WebSocket 연결 상태를 표시합니다.
             </p>
           </div>
 
-          <span className="w-fit rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-            mock connected
-          </span>
+          <MonitoringConnectionBadge status={overallStatus} />
         </div>
       </CardHeader>
 
@@ -70,13 +82,15 @@ export default function MonitoringStatusCard({ selectedContainer }) {
             <div className="grid gap-4 md:grid-cols-2">
               <ConnectionCard
                 label="Metrics WS"
-                endpoint="/ws/metrics/{container_id}"
-                status="Ready"
+                endpoint="/container/ws/metrics/{container_id}"
+                status={metricsStatus}
+                source={metricsSource}
               />
               <ConnectionCard
                 label="Logs WS"
-                endpoint="/ws/logs/{container_id}"
-                status="Ready"
+                endpoint="/container/ws/logs/{container_id}"
+                status={logsStatus}
+                source={logsSource}
               />
             </div>
           </div>
@@ -86,7 +100,7 @@ export default function MonitoringStatusCard({ selectedContainer }) {
   )
 }
 
-function ConnectionCard({ label, endpoint, status }) {
+function ConnectionCard({ label, endpoint, status, source }) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
       <div className="flex items-center justify-between gap-3">
@@ -94,16 +108,37 @@ function ConnectionCard({ label, endpoint, status }) {
           {label}
         </p>
 
-        <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
-          {status}
-        </span>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <MonitoringSourceBadge source={source} />
+          <MonitoringConnectionBadge status={status} />
+        </div>
       </div>
 
       <p className="mt-3 font-mono text-sm text-slate-300">{endpoint}</p>
       <p className="mt-2 text-xs leading-5 text-slate-500">
-        현재는 mock UI 상태이며, 추후 WebSocket hook으로 교체할 수 있도록
-        영역을 분리했습니다.
+        WebSocket 우선 연결 구조를 사용하며, 연결 실패 시 mock fallback으로
+        동작합니다.
       </p>
     </div>
   )
+}
+
+function getOverallStatus(metricsStatus, logsStatus) {
+  if (metricsStatus === "error" || logsStatus === "error") {
+    return "error"
+  }
+
+  if (metricsStatus === "fallback" || logsStatus === "fallback") {
+    return "fallback"
+  }
+
+  if (metricsStatus === "connecting" || logsStatus === "connecting") {
+    return "connecting"
+  }
+
+  if (metricsStatus === "connected" && logsStatus === "connected") {
+    return "connected"
+  }
+
+  return "idle"
 }

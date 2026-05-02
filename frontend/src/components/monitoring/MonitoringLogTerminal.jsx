@@ -1,23 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { useContainerLogs } from "@/hooks/useContainerLogs"
 import MonitoringLogHeader from "@/components/monitoring/MonitoringLogHeader"
 import MonitoringLogToolbar from "@/components/monitoring/MonitoringLogToolbar"
 import MonitoringLogBody from "@/components/monitoring/MonitoringLogBody"
 
-export default function MonitoringLogTerminal({ selectedContainer }) {
+export default function MonitoringLogTerminal({
+  selectedContainer,
+  logsResult,
+}) {
   const [activeStream, setActiveStream] = useState("all")
   const terminalRef = useRef(null)
 
   const {
-    logs,
-    isPaused,
-    clearLogs,
-    togglePause,
-    source,
-    connectionStatus,
-    reconnect,
-  } = useContainerLogs(selectedContainer)
+    logs = [],
+    isPaused = false,
+    clearLogs = () => {},
+    togglePause = () => {},
+    source = "mock-fallback",
+    connectionStatus = "idle",
+    reconnect = () => {},
+  } = logsResult ?? {}
 
   const filteredLogs = useMemo(() => {
     if (activeStream === "all") return logs

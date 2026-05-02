@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react"
 import MainLayout from "@/layouts/MainLayout"
 import { useContainers } from "@/hooks/useContainers"
+import { useContainerMetricHistory } from "@/hooks/useContainerMetricHistory"
+import { useContainerLogs } from "@/hooks/useContainerLogs"
 import MonitoringContainerList from "@/components/monitoring/MonitoringContainerList"
 import MonitoringChartPanel from "@/components/monitoring/MonitoringChartPanel"
 import MonitoringStatusCard from "@/components/monitoring/MonitoringStatusCard"
@@ -37,6 +39,9 @@ export default function Monitoring() {
     )
   }, [containers, selectedContainerId])
 
+  const metricsResult = useContainerMetricHistory(selectedContainer)
+  const logsResult = useContainerLogs(selectedContainer)
+
   function handleSelectContainer(container) {
     const currentId = container.container_id ?? container.id
     setSelectedContainerId(currentId)
@@ -54,7 +59,7 @@ export default function Monitoring() {
 
               <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
                 <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
-                Mock preview
+                WebSocket Ready
               </span>
             </div>
 
@@ -65,15 +70,21 @@ export default function Monitoring() {
 
               <p className="max-w-3xl text-sm leading-7 text-slate-400 xl:text-[15px]">
                 선택한 컨테이너의 CPU, Memory 변화와 로그 스트림을 한 화면에서
-                확인합니다. 현재는 mock 데이터를 기반으로 UI 구조를 먼저 구성하고,
-                추후 WebSocket 연결로 전환할 수 있도록 영역을 분리합니다.
+                확인합니다. WebSocket 우선 연결 구조를 적용했으며, 연결 실패 시
+                mock fallback으로 동작합니다.
               </p>
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <HeaderMetaChip label="Metrics" value="/ws/metrics/{container_id}" />
-              <HeaderMetaChip label="Logs" value="/ws/logs/{container_id}" />
-              <HeaderMetaChip label="Mode" value="Mock UI Preview" />
+              <HeaderMetaChip
+                label="Metrics"
+                value="/container/ws/metrics/{container_id}"
+              />
+              <HeaderMetaChip
+                label="Logs"
+                value="/container/ws/logs/{container_id}"
+              />
+              <HeaderMetaChip label="Mode" value="Real WS + Mock Fallback" />
             </div>
           </div>
         </header>
@@ -89,11 +100,21 @@ export default function Monitoring() {
           />
 
           <section className="space-y-7">
-            <MonitoringChartPanel selectedContainer={selectedContainer} />
+            <MonitoringChartPanel
+              selectedContainer={selectedContainer}
+              metricsResult={metricsResult}
+            />
 
-            <MonitoringStatusCard selectedContainer={selectedContainer} />
+            <MonitoringStatusCard
+              selectedContainer={selectedContainer}
+              metricsResult={metricsResult}
+              logsResult={logsResult}
+            />
 
-            <MonitoringLogTerminal selectedContainer={selectedContainer} />
+            <MonitoringLogTerminal
+              selectedContainer={selectedContainer}
+              logsResult={logsResult}
+            />
           </section>
         </div>
       </div>
