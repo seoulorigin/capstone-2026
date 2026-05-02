@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from datetime import datetime
 import random
+import asyncio
+
+from concurrent.futures import ThreadPoolExecutor
 
 from database import get_db
 from schemas.container import ContainerStatResponse
 from services.docker_service import DockerService
 from docker.errors import NotFound, APIError
+
+executor = ThreadPoolExecutor(max_workers=10)
 
 # container router 설정
 router = APIRouter()
@@ -112,14 +117,74 @@ def ping():
 @router.get("/{container_id}/stats", response_model=ContainerStatResponse)
 async def get_container_stats(container_id: str):
 
-# 특정 컨테이너의 CPU, 메모리 사용량을 반환
-# 현재는 시뮬레이션을 위해 랜덤 데이터를 생성
-
     return {
         "container_id": container_id,
-        "cpu_percent": round(random.uniform(5.0, 25.0), 1),
+        "cpu_percent": round(random.uniform(5.0, 25.0),1),
         "memory_mb": round(random.uniform(200.0, 400.0), 1),
         "memory_limit_mb": 1024.0,
         "timestamp": datetime.utcnow()
     }
 
+
+# [Metrics WS] 엔드포인트
+@router.websocket("/ws/metrics/{container_id}")
+async def websocket_metrics(websocket: WebSocket, container_id: str):
+    await websocket.accept()
+    print(f"Metrics WS Connected: {container_id}")
+
+    loop = asyncio.get_event_loop()
+    try:
+        while True:
+            stats = await loop.run_in_executor(
+                executor, 
+                docker_service.get_container_stats, 
+                container_id
+            )
+            
+            if stats:
+                await websocket.send_json(stats)
+            
+            await asyncio.sleep(3) # 3초 주기 유지
+            
+    except WebSocketDisconnect:
+        print(f"Metrics WS Disconnected: {container_id}")
+    except Exception as e:
+        print(f"Metrics WS Error: {e}")
+    finally:
+        # 안전하게 소켓 닫기
+        try:
+            await websocket.close()
+        except:
+            pass
+
+# [Logs WS] 엔드포인트
+@router.websocket("/ws/logs/{container_id}")
+async def websocket_logs(websocket: WebSocket, container_id: str):
+    await websocket.accept()
+    
+    # print(f"Logs WS Connected: {container_id}")
+    loop = asyncio.get_event_loop()
+    
+    try:
+        log_generator = await loop.run_in_executor(
+            executor,
+            docker_service.get_container_logs,
+            container_id)
+        
+        # log_generator는 bytes를 하나씩 내뱉는 이터레이터입니다.
+        for line in log_generator:
+            log_message = line.decode('utf-8').strip()
+            
+            payload = {
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "stream": "stdout",  
+                "message": log_message
+            }
+            
+            await websocket.send_json(payload)
+            await asyncio.sleep(0.1)   
+            
+    except Exception as e:
+        print(f"로그 전송 에러: {e}")
+    finally:
+        await websocket.close()
