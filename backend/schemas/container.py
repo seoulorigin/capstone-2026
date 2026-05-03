@@ -10,3 +10,5 @@ class ContainerStatResponse(BaseModel) :
 
     class Config:
         from_attributes = True
+class ComposeRequest(BaseModel):
+    yaml: str # 전체 yaml 문자

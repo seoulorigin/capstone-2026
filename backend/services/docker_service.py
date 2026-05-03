@@ -1,4 +1,8 @@
 import docker
+import subprocess
+import tempfile
+import os
+import yaml 
 from docker.errors import NotFound, APIError
 
 from sqlalchemy.orm import Session
@@ -103,6 +107,29 @@ class DockerService:
 # 라우터에서 공용으로 사용할 인스턴스 생성
 docker_service = DockerService()
 
+class DockerService:
+    async def deploy_with_yaml(self, yaml_content: str):
+        try:
+            yaml.safe_load(yaml_content)
+        except yaml.YAMLError as e:
+            raise Exception(f"Invalid YAML format: {e}")
 
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            compose_path = os.path.join(tmp_dir, "docker-compose.yaml")
+        with open(compose_path, "w") as f:
+            f.write(yaml_content)
+
+        project_name = "capstone_project"
+        command = ["docker", "compose", "-p", project_name, "-f", compose_path, "up", "-d"]
+
+        process = subprocess.run(
+            command,
+            capture_output = True,
+            text = True
+        )
+        if process.returncode != 0:
+            raise Exception(f"Docker Compose Error: {proess.stderr}")
+
+        return process.stdout
 
 
