@@ -1,4 +1,8 @@
 import docker
+import subprocess
+import tempfile
+import os
+import yaml
 from docker.errors import NotFound, APIError
 
 from sqlalchemy.orm import Session
@@ -54,6 +58,29 @@ class DockerService:
             "image": container.attrs["Config"]["Image"], # 태그 "nginx:1.25"
             "status": container.status
         }
+
+    def deploy_compose(self, yaml_text: str) -> dict:
+        try:
+            yaml.safe_load(yaml_text)
+        except yaml.YAMLError as e:
+            raise ValueError(f"유효하지 않은 YAML입니다: {e}")
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+            f.write(yaml_text)
+            tmp_path = f.name
+
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "-f", tmp_path, "up", "-d"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.strip())
+        finally:
+            os.unlink(tmp_path)
+
+        return {"message": "Compose 배포가 완료되었습니다."}
 
     def get_container_stats(self, container_id: str) -> dict:
         container = self.client.containers.get(container_id)

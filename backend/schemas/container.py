@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 from datetime import datetime
 
+class ComposeDeployRequest(BaseModel):
+    yaml: str
+
+class ComposeDeployResponse(BaseModel):
+    message: str
+
 class ContainerStatResponse(BaseModel) :
     container_id : str
     cpu_percent : float
