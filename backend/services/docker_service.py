@@ -104,10 +104,6 @@ class DockerService:
         # stream=True, follow=True를 통해 실시간 로그 스트림 반환  
         return container.logs(stream=True, follow=True, tail=10)
 
-# 라우터에서 공용으로 사용할 인스턴스 생성
-docker_service = DockerService()
-
-class DockerService:
     async def deploy_with_yaml(self, yaml_content: str):
         try:
             yaml.safe_load(yaml_content)
@@ -128,8 +124,21 @@ class DockerService:
             text = True
         )
         if process.returncode != 0:
-            raise Exception(f"Docker Compose Error: {proess.stderr}")
+            raise Exception(f"Docker Compose Error: {process.stderr}")
 
         return process.stdout
 
+    def sync_to_db(self, db=None):
+        containers = self.list_containers(all=True)
+        formatted = []
+        for c in containers:
+            formatted.append({
+                "container_id": c["id"],
+                "name": c["name"],
+                "image": c["image"],
+                "status": c["status"],
+                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+        return formatted 
 
+docker_service = DockerService() 

@@ -10,14 +10,11 @@ origins=[
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8000",
-        "http://127.0.0.1:5173",  # 추가
-        "http://127.0.0.1:5173",  # 추가
         "http://52.78.113.234:5173",
         "http://52.78.113.234:8000"]
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=origins,
-    allow_origin=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

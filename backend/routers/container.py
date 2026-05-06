@@ -46,11 +46,11 @@ def get_containers(db: Session = Depends(get_db)):
         containers = docker_service.sync_to_db(db)
         return [
             {
-                "id": c.container_id,
-                "name": c.name,
-                "image": c.image,
-                "status": c.status,
-                "updated_at": c.updated_at,
+                "id": c["container_id"],
+                "name": c["name"],
+                "image": c["image"],
+                "status": c["status"],
+                "updated_at": c["updated_at"],
             }
             for c in containers
         ]
