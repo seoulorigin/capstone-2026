@@ -10,7 +10,7 @@ from database import get_db
 from schemas.container import ContainerStatResponse
 from services.docker_service import DockerService
 from docker.errors import NotFound, APIError
-from schemas.container import ComposeRequest
+from schemas.container import ComposeDeployRequest, ComposeDeployResponse
 
 executor = ThreadPoolExecutor(max_workers=10)
 
@@ -191,7 +191,7 @@ async def websocket_logs(websocket: WebSocket, container_id: str):
         await websocket.close()
 
 @router.post("/compose/up")
-async def deploy_compose(request: ComposeRequest):
+async def deploy_compose(request: ComposeDeployRequest):
     try:
         result = await docker_service.deploy_with_yaml(request.yaml)
         return {"status": "success", "message": "Deployment started", "details":result}

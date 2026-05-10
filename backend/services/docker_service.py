@@ -1,9 +1,11 @@
+import asyncio
 import docker
 import subprocess
 import tempfile
 import os
 import yaml 
 from docker.errors import NotFound, APIError
+from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
@@ -104,29 +106,51 @@ class DockerService:
         # stream=True, follow=True를 통해 실시간 로그 스트림 반환  
         return container.logs(stream=True, follow=True, tail=10)
 
-    async def deploy_with_yaml(self, yaml_content: str):
+
+    async def deploy_compose(self, yaml_text: str) -> dict:
+        # YAML 유효성 검사
         try:
-            yaml.safe_load(yaml_content)
+            yaml.safe_load(yaml_text)
         except yaml.YAMLError as e:
-            raise Exception(f"Invalid YAML format: {e}")
-
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            compose_path = os.path.join(tmp_dir, "docker-compose.yaml")
-        with open(compose_path, "w") as f:
-            f.write(yaml_content)
-
-        project_name = "capstone_project"
-        command = ["docker", "compose", "-p", project_name, "-f", compose_path, "up", "-d"]
-
-        process = subprocess.run(
-            command,
-            capture_output = True,
-            text = True
-        )
-        if process.returncode != 0:
-            raise Exception(f"Docker Compose Error: {process.stderr}")
-
-        return process.stdout
+            raise HTTPException(
+                status_code=400,
+                detail={"status": "error", "message": f"유효하지 않은 YAML입니다: {e}"},
+            )
+ 
+        # 임시 파일 생성 (delete=False → finally에서 직접 삭제)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+            f.write(yaml_text)
+            tmp_path = f.name
+ 
+        loop = asyncio.get_event_loop()
+ 
+        def run_compose():
+            try:
+                result = subprocess.run(
+                    ["docker", "compose", "-f", tmp_path, "up", "-d"],
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    # 실패 시 stderr 메시지를 RuntimeError로 전달
+                    raise RuntimeError(result.stderr.strip())
+                return result.stdout
+            finally:
+                # 성공/실패 무관하게 임시 파일 항상 삭제
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+ 
+        try:
+            # blocking subprocess를 thread executor로 분리 → 이벤트 루프 블로킹 방지
+            output = await loop.run_in_executor(None, run_compose)
+            return {"status": "success", "message": "Compose 배포가 완료되었습니다.", "output": output}
+        except RuntimeError as e:
+            # 프론트와 협의한 에러 응답 구조: detail: { status, message }
+            raise HTTPException(
+                status_code=500,
+                detail={"status": "error", "message": str(e)},
+            )
+ 
 
     def sync_to_db(self, db=None):
         containers = self.list_containers(all=True)
