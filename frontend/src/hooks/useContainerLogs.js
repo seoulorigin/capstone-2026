@@ -43,7 +43,8 @@ function useAutoLogs(selectedContainer) {
   return {
     ...mockResult,
     source: "mock-fallback",
-    connectionStatus: realResult.connectionStatus,
+    connectionStatus: "fallback",
+    realConnectionStatus: realResult.connectionStatus,
     realError: realResult.error,
     reconnect: realResult.reconnect,
   }
