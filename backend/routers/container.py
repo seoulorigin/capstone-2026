@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import random
 import asyncio
 
@@ -162,38 +162,71 @@ async def websocket_metrics(websocket: WebSocket, container_id: str):
 @router.websocket("/ws/logs/{container_id}")
 async def websocket_logs(websocket: WebSocket, container_id: str):
     await websocket.accept()
+    print(f"Logs WS Connected: {container_id}")
     
-    # print(f"Logs WS Connected: {container_id}")
     loop = asyncio.get_event_loop()
+    closed = False # 중복 close 방지 플래그
     
     try:
         log_generator = await loop.run_in_executor(
             executor,
             docker_service.get_container_logs,
             container_id)
-        
-        # log_generator는 bytes를 하나씩 내뱉는 이터레이터입니다.
-        for line in log_generator:
-            log_message = line.decode('utf-8').strip()
-            
+
+        def read_next():
+            try:
+                return next(log_generator)
+            except StopIteration:
+                return None
+
+        while True:
+            line = await loop.run_in_executor(executor, read_next)
+
+            if line is None:
+                break
+
+            log_message = line.decode("utf-8", errors="replace").strip()
+            KST = timezone(timedelta(hours=9))
             payload = {
-                "time": datetime.now().strftime("%H:%M:%S"),
+                "time": datetime.now(KST).strftime("%H:%M:%S"),
                 "stream": "stdout",  
                 "message": log_message
             }
             
             await websocket.send_json(payload)
-            await asyncio.sleep(0.1)   
+            await asyncio.sleep(0.1)
+
+    except WebSocketDisconnect:
+            print(f"logs WS Disconnected: {container_id}")
+       
             
     except Exception as e:
+        
         print(f"로그 전송 에러: {e}")
+        if not closed:
+            try:
+                await websocket.send_json({
+                    "time":datetime.now().strftime("%H:%M:%S"),
+                    "stream": "stderr",
+                    "message":f"[error] {str(e)}"
+                    })
+            except Exception:
+                pass      
+            
     finally:
-        await websocket.close()
+        # 이미 닫힌 소켓에 중복 close 방지
+        if not closed:
+            closed = True
+            try:
+                await websocket.close()
+            except Exception:
+                pass
+
 
 @router.post("/compose/up")
 async def deploy_compose(request: ComposeDeployRequest):
     try:
-        result = await docker_service.deploy_with_yaml(request.yaml)
+        result = await docker_service.deploy_compose(request.yaml)
         return {"status": "success", "message": "Deployment started", "details":result}
     except Exception as e:
         raise HTTPException(status_code = 400, detail=str(e))
