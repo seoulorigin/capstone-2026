@@ -107,6 +107,20 @@ class DockerService:
         # stream=True, follow=True를 통해 실시간 로그 스트림 반환  
         return container.logs(stream=True, follow=True, tail=10)
 
+    def get_container_logs_json(self, container_id: str):
+    from datetime import timezone, timedelta
+    KST = timezone(timedelta(hours=9))
+    container = self.client.containers.get(container_id)
+    log_stream = container.logs(stream=True, follow=True, tail=10)
+
+    def generate():
+        for line in log_stream:
+            yield {
+                "time": datetime.now(KST).strftime("%H:%M:%S"),
+                "stream": "stdout",
+                "message": line.decode("utf-8", errors="replace").strip()
+            }
+    return generate()
 
     async def deploy_compose(self, yaml_text: str) -> dict:
         # YAML 유효성 검사

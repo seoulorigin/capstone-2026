@@ -186,7 +186,7 @@ async def websocket_logs(websocket: WebSocket, container_id: str):
     try:
         log_generator = await loop.run_in_executor(
             executor,
-            docker_service.get_container_logs,
+            docker_service.get_container_logs_json,
             container_id)
 
         def read_next():
@@ -196,19 +196,11 @@ async def websocket_logs(websocket: WebSocket, container_id: str):
                 return None
 
         while True:
-            line = await loop.run_in_executor(executor, read_next)
+            payload = await loop.run_in_executor(executor, read_next)
 
-            if line is None:
+            if payload is None:
                 break
 
-            log_message = line.decode("utf-8", errors="replace").strip()
-            KST = timezone(timedelta(hours=9))
-            payload = {
-                "time": datetime.now(KST).strftime("%H:%M:%S"),
-                "stream": "stdout",  
-                "message": log_message
-            }
-            
             await websocket.send_json(payload)
             await asyncio.sleep(0.1)
 
