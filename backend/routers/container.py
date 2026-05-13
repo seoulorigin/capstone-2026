@@ -186,7 +186,7 @@ async def websocket_logs(websocket: WebSocket, container_id: str):
     try:
         log_generator = await loop.run_in_executor(
             executor,
-            docker_service.get_container_logs_json,
+            docker_service.get_container_logs,
             container_id)
 
         def read_next():
@@ -197,10 +197,9 @@ async def websocket_logs(websocket: WebSocket, container_id: str):
 
         while True:
             payload = await loop.run_in_executor(executor, read_next)
-
             if payload is None:
                 break
-
+            
             await websocket.send_json(payload)
             await asyncio.sleep(0.1)
 
