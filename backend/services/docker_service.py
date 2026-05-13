@@ -75,8 +75,9 @@ class DockerService:
                     "memory_percent": 0.0,
                 }
 
-            stats = container.stats(stream=False)
-
+            stats = next(container.stats(stream=True))
+        
+            
             # CPU 사용률 계산
             cpu_delta = stats["cpu_stats"]["cpu_usage"]["total_usage"] - stats["precpu_stats"]["cpu_usage"]["total_usage"]
             system_delta = stats["cpu_stats"]["system_cpu_usage"] - stats["precpu_stats"]["system_cpu_usage"]
