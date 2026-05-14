@@ -1,24 +1,33 @@
-export default function SidebarNav({ activeMenu, onChangeMenu }) {
+import { useLocation, useNavigate } from "react-router-dom"
+
+export default function SidebarNav() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const menuItems = [
     {
       id: "dashboard",
       label: "Dashboard",
-      description: "모니터링",
+      description: "컨테이너 현황",
+      path: "/dashboard",
+    },
+    {
+      id: "monitoring",
+      label: "Monitoring",
+      description: "상세 메트릭 · 로그",
+      path: "/monitoring",
     },
     {
       id: "compose-editor",
       label: "Compose Editor",
       description: "YAML 편집",
-    },
-    {
-      id: "logs",
-      label: "Logs",
-      description: "로그 조회",
+      path: "/compose-editor",
     },
     {
       id: "settings",
       label: "Settings",
       description: "환경 설정",
+      path: "/settings",
     },
   ]
 
@@ -39,13 +48,13 @@ export default function SidebarNav({ activeMenu, onChangeMenu }) {
 
         <nav className="mt-4 flex-1 space-y-2">
           {menuItems.map((item) => {
-            const isActive = activeMenu === item.id
+            const isActive = location.pathname === item.path
 
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => onChangeMenu?.(item.id)}
+                onClick={() => navigate(item.path)}
                 className={`group w-full rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
                   isActive
                     ? "border-cyan-500/30 bg-cyan-500/10 shadow-[0_0_0_1px_rgba(34,211,238,0.16)]"
@@ -61,6 +70,7 @@ export default function SidebarNav({ activeMenu, onChangeMenu }) {
                     >
                       {item.label}
                     </p>
+
                     <p
                       className={`mt-1 text-xs ${
                         isActive ? "text-cyan-300/80" : "text-slate-500"
@@ -92,8 +102,8 @@ export default function SidebarNav({ activeMenu, onChangeMenu }) {
               Design Preview
             </p>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              현재는 메뉴 UI만 반영된 상태이며, 실제 페이지 이동은 연결되지
-              않았습니다.
+              상세 모니터링 페이지에서 컨테이너별 메트릭과 로그를 함께 확인할
+              수 있습니다.
             </p>
           </div>
         </div>
