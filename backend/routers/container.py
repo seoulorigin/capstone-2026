@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 import random
@@ -58,6 +58,31 @@ def get_containers(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
 
+# Docker 소켓 연결 상태 확인
+@router.get("/health/ping")
+def ping():
+    try:
+        ok = docker_service.ping()
+        return {"connected": ok}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Docker 연결 실패: {str(e)}")
+
+
+
+@router.post("/compose/up")
+async def deploy_compose(file: UploadFile = File(...)):
+    try:
+        yaml_text = (await file.read()).decode("utf-8")
+        result = await docker_service.deploy_compose(yaml_text)
+        return {"status": "success", "message": "Deployment started", "details":result}
+    except HTTPException:
+        raise 
+    except Exception as e:
+        raise HTTPException(
+            status_code = 500,
+            detail={"status": "error", "message": str(e)}
+        )
+    
 # 단일 컨테이너 상태 조회
 @router.get("/{container_id}")
 def get_container(container_id: str, db: Session = Depends(get_db)):
@@ -102,15 +127,6 @@ def restart_container(container_id: str):
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Docker 오류: {str(e)}")
 
-
-# Docker 소켓 연결 상태 확인
-@router.get("/health/ping")
-def ping():
-    try:
-        ok = docker_service.ping()
-        return {"connected": ok}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Docker 연결 실패: {str(e)}")
 
 
 # 리소스 실시간 통계 조회
@@ -186,7 +202,7 @@ async def websocket_logs(websocket: WebSocket, container_id: str):
     try:
         log_generator = await loop.run_in_executor(
             executor,
-            docker_service.get_container_logs,
+            docker_service.get_container_logs_json,
             container_id)
 
         def read_next():
@@ -230,10 +246,3 @@ async def websocket_logs(websocket: WebSocket, container_id: str):
                 pass
 
 
-@router.post("/compose/up")
-async def deploy_compose(request: ComposeDeployRequest):
-    try:
-        result = await docker_service.deploy_compose(request.yaml)
-        return {"status": "success", "message": "Deployment started", "details":result}
-    except Exception as e:
-        raise HTTPException(status_code = 400, detail=str(e))
