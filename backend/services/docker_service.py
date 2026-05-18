@@ -138,7 +138,7 @@ class DockerService:
         def run_compose():
             try:
                 result = subprocess.run(
-                    ["docker", "compose", "-f", tmp_path, "up", "-d"],
+                    ["docker-compose", "-f", tmp_path, "up", "-d"],
                     capture_output=True,
                     text=True,
                 )
