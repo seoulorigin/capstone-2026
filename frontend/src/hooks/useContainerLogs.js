@@ -4,22 +4,23 @@ import { useContainerLogsWebSocket } from "@/hooks/useContainerLogsWebSocket"
 const MONITORING_MODE =
   import.meta.env.VITE_MONITORING_LOGS_MODE ?? "auto"
 
-// mode:
-// - "mock": 항상 mock 사용
-// - "real": 실제 WebSocket만 사용
-// - "auto": WebSocket 연결 성공 시 real, 실패/미연결 시 mock 사용
-export function useContainerLogs(selectedContainer) {
+// mock 전용 hook 결과를 반환합니다.
+function useMockLogsOnly(selectedContainer) {
+  const mockResult = useMockContainerLogs(selectedContainer)
+
+  return {
+    ...mockResult,
+    source: "mock",
+    connectionStatus: "mock",
+    realError: null,
+    reconnect: () => {},
+  }
+}
+
+// real 또는 auto 모드에서 logs WebSocket과 mock fallback을 함께 관리합니다.
+function useAutoLogs(selectedContainer) {
   const mockResult = useMockContainerLogs(selectedContainer)
   const realResult = useContainerLogsWebSocket(selectedContainer)
-
-  if (MONITORING_MODE === "mock") {
-    return {
-      ...mockResult,
-      source: "mock",
-      connectionStatus: "mock",
-      reconnect: realResult.reconnect,
-    }
-  }
 
   if (MONITORING_MODE === "real") {
     return {
@@ -42,8 +43,18 @@ export function useContainerLogs(selectedContainer) {
   return {
     ...mockResult,
     source: "mock-fallback",
-    connectionStatus: realResult.connectionStatus,
+    connectionStatus: "fallback",
+    realConnectionStatus: realResult.connectionStatus,
     realError: realResult.error,
     reconnect: realResult.reconnect,
   }
+}
+
+// 로그 모드에 따라 mock-only 또는 real/auto 로그 처리를 선택합니다.
+export function useContainerLogs(selectedContainer) {
+  if (MONITORING_MODE === "mock") {
+    return useMockLogsOnly(selectedContainer)
+  }
+
+  return useAutoLogs(selectedContainer)
 }

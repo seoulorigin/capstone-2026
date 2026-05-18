@@ -1,5 +1,3 @@
-// src/api/containerApi.js
-
 import { api } from "./client"
 import axios from "axios"
 import { mockContainers } from "@/mocks/data/containers"

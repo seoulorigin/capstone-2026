@@ -91,8 +91,15 @@ export function useMockContainerLogs(selectedContainer) {
     setIsPaused((current) => !current)
   }
 
+  const fallbackLogs = useMemo(() => {
+    if (!selectedContainer) return []
+    return createInitialLogs(selectedContainer)
+  }, [selectedContainer, containerKey])
+
+  const displayLogs = logs.length > 0 ? logs : fallbackLogs
+
   return {
-    logs,
+    logs: displayLogs,
     isPaused,
     isMock: true,
     clearLogs,

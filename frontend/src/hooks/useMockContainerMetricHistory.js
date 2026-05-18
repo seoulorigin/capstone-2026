@@ -92,10 +92,16 @@ export function useMockContainerMetricHistory(selectedContainer) {
     }
   }, [selectedContainer, containerKey])
 
-  const latestMetric = history.at(-1) ?? null
+  const fallbackHistory = useMemo(() => {
+    if (!selectedContainer) return []
+    return createInitialHistory(selectedContainer)
+  }, [selectedContainer, containerKey])
+
+  const displayHistory = history.length > 0 ? history : fallbackHistory
+  const latestMetric = displayHistory.at(-1) ?? null
 
   return {
-    history,
+    history: displayHistory,
     latestMetric,
     isMock: true,
   }
