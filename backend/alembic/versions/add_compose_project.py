@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_compose_project'
-down_revision = 'c69ce46a46c3_initial_migration'
+down_revision = 'c69ce46a46c3'
 branch_labels = None
 depends_on = None
 
