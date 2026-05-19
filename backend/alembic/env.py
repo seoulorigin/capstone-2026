@@ -6,10 +6,11 @@ from sqlalchemy import pool
 from alembic import context
 
 import sys
-sys.path.append('.')
-from backend.database import Base
-from backend.models.project import Project
-from backend.models import *
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from database import Base
+from models.project import Project
+from models import *
 
 target_metadata = Base.metadata
 
