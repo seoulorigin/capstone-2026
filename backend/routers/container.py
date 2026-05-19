@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Cookie
 from sqlalchemy.orm import Session
 from datetime import datetime
 import random
 
 from database import get_db
 from schemas.container import ContainerStatResponse
-from services.docker_service import DockerService
+from schemas.compose import ComposeUpRequest, ComposeUpResponse
+from services.docker_service import DockerService, ComposeManager
+from services.session import get_username_from_session
+from models.compose import ComposeProject
 from docker.errors import NotFound, APIError
 
 # container router 설정
@@ -44,7 +47,7 @@ def get_containers(db: Session = Depends(get_db)):
                 "name": c.name,
                 "image": c.image,
                 "status": c.status,
-                "updated_at": c.updated_at,
+                "created_at": c.created_at,
             }
             for c in containers
         ]
@@ -123,3 +126,89 @@ async def get_container_stats(container_id: str):
         "timestamp": datetime.utcnow()
     }
 
+
+# [Compose Up] 엔드포인트
+@router.post("/compose/up", response_model=ComposeUpResponse)
+async def compose_up(request: ComposeUpRequest, db: Session = Depends(get_db), session_id: str = Cookie(None)):
+    username = get_username_from_session(session_id)
+    if not username:
+        raise HTTPException(status_code=401, detail="인증 필요")
+
+    manager = ComposeManager(f"project_{datetime.now().timestamp()}")
+
+    if not manager.validate_yaml(request.yaml):
+        raise HTTPException(status_code=400, detail="유효하지 않은 YAML 형식")
+
+    try:
+        manager.save_yaml(request.yaml)
+
+        project = ComposeProject(
+            project_name=manager.project_name,
+            yaml_content=request.yaml,
+            status="pending",
+            owner_username=username
+        )
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+
+        return ComposeUpResponse(
+            project_id=project.id,
+            message="배포 준비 완료. WebSocket으로 진행 상황을 확인하세요."
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"배포 준비 실패: {str(e)}")
+
+
+# [Compose WebSocket] 엔드포인트
+@router.websocket("/ws/compose/{project_id}")
+async def websocket_compose(websocket: WebSocket, project_id: int, db: Session = Depends(get_db)):
+    await websocket.accept()
+    print(f"Compose WS Connected: {project_id}")
+
+    manager = None
+    project = None
+
+    try:
+        project = db.query(ComposeProject).filter(ComposeProject.id == project_id).first()
+        if not project:
+            await websocket.send_json({"type": "error", "message": "프로젝트를 찾을 수 없습니다."})
+            await websocket.close()
+            return
+
+        project.status = "running"
+        db.commit()
+
+        manager = ComposeManager(project.project_name)
+        manager.save_yaml(project.yaml_content)
+
+        async for event in manager.up_async():
+            await websocket.send_json(event)
+
+        project.status = "completed"
+        project.completed_at = datetime.utcnow()
+        db.commit()
+
+    except WebSocketDisconnect:
+        print(f"Compose WS Disconnected: {project_id}")
+        if manager:
+            manager.terminate()
+        if project:
+            project.status = "failed"
+            db.commit()
+    except Exception as e:
+        print(f"Compose WS Error: {e}")
+        try:
+            await websocket.send_json({"type": "error", "message": str(e)})
+        except Exception:
+            pass
+        if project:
+            project.status = "failed"
+            db.commit()
+    finally:
+        if manager:
+            manager.terminate()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
