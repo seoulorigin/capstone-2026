@@ -20,8 +20,12 @@ const initialComposeOptions = {
   serviceName: "app",
   image: "nginx:latest",
   containerName: "my-container",
-  hostPort: "8080",
-  containerPort: "80",
+  ports: [
+    {
+      hostPort: "8080",
+      containerPort: "80",
+    },
+  ],
   environmentKey: "NODE_ENV",
   environmentValue: "production",
 }

@@ -1,5 +1,10 @@
 import yaml from "js-yaml"
 
+import {
+  buildPortValues,
+  parsePorts,
+} from "@/features/compose/utils/composePortUtils"
+
 const DEFAULT_SERVICE_NAME = "app"
 
 function createValidationError(message) {
@@ -8,20 +13,6 @@ function createValidationError(message) {
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)
-}
-
-function parsePort(portValue) {
-  if (typeof portValue !== "string" && typeof portValue !== "number") {
-    throw createValidationError("ports는 문자열 또는 숫자 형식이어야 합니다.")
-  }
-
-  const portText = String(portValue)
-  const [hostPort = "", containerPort = ""] = portText.split(":")
-
-  return {
-    hostPort,
-    containerPort: containerPort || hostPort,
-  }
 }
 
 function parseEnvironment(environment) {
@@ -100,8 +91,10 @@ export function convertOptionsToYaml(options) {
     service.container_name = options.containerName.trim()
   }
 
-  if (options.hostPort?.trim() && options.containerPort?.trim()) {
-    service.ports = [`${options.hostPort.trim()}:${options.containerPort.trim()}`]
+  const portValues = buildPortValues(options.ports)
+
+  if (portValues.length > 0) {
+    service.ports = portValues
   }
 
   if (options.environmentKey?.trim() && options.environmentValue?.trim()) {
@@ -143,21 +136,7 @@ export function convertYamlToOptions(yamlText) {
     throw createValidationError("service에는 image 문자열이 필요합니다.")
   }
 
-  let hostPort = ""
-  let containerPort = ""
-
-  if (service.ports) {
-    if (!Array.isArray(service.ports)) {
-      throw createValidationError("ports는 배열 형식이어야 합니다.")
-    }
-
-    if (service.ports.length > 0) {
-      const parsedPort = parsePort(service.ports[0])
-      hostPort = parsedPort.hostPort
-      containerPort = parsedPort.containerPort
-    }
-  }
-
+  const ports = parsePorts(service.ports)
   const { environmentKey, environmentValue } = parseEnvironment(
     service.environment,
   )
@@ -166,8 +145,7 @@ export function convertYamlToOptions(yamlText) {
     serviceName,
     image: service.image,
     containerName: service.container_name || "",
-    hostPort,
-    containerPort,
+    ports,
     environmentKey,
     environmentValue,
   }

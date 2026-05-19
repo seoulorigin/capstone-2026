@@ -1,6 +1,21 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import ComposePortFields from "@/features/compose/components/ComposePortFields"
+
+const sampleOptions = {
+  serviceName: "app",
+  image: "nginx:latest",
+  containerName: "my-container",
+  ports: [
+    {
+      hostPort: "8080",
+      containerPort: "80",
+    },
+  ],
+  environmentKey: "NODE_ENV",
+  environmentValue: "production",
+}
 
 export default function ComposeOptionForm({ options, onChange }) {
   const updateField = (field, value) => {
@@ -11,7 +26,7 @@ export default function ComposeOptionForm({ options, onChange }) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="grid gap-2">
         <Label htmlFor="serviceName">Service Name</Label>
         <Input
@@ -42,25 +57,10 @@ export default function ComposeOptionForm({ options, onChange }) {
         />
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="hostPort">Host Port</Label>
-        <Input
-          id="hostPort"
-          value={options.hostPort}
-          onChange={(event) => updateField("hostPort", event.target.value)}
-          placeholder="8080"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="containerPort">Container Port</Label>
-        <Input
-          id="containerPort"
-          value={options.containerPort}
-          onChange={(event) => updateField("containerPort", event.target.value)}
-          placeholder="80"
-        />
-      </div>
+      <ComposePortFields
+        ports={options.ports}
+        onChange={(nextPorts) => updateField("ports", nextPorts)}
+      />
 
       <div className="grid gap-2">
         <Label htmlFor="environmentKey">Environment Key</Label>
@@ -90,17 +90,7 @@ export default function ComposeOptionForm({ options, onChange }) {
         type="button"
         variant="outline"
         className="w-full"
-        onClick={() =>
-          onChange({
-            serviceName: "app",
-            image: "nginx:latest",
-            containerName: "my-container",
-            hostPort: "8080",
-            containerPort: "80",
-            environmentKey: "NODE_ENV",
-            environmentValue: "production",
-          })
-        }
+        onClick={() => onChange(sampleOptions)}
       >
         샘플 값 채우기
       </Button>
