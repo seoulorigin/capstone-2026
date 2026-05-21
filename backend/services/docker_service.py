@@ -73,7 +73,7 @@ class DockerService:
                     "memory_percent": 0.0,
                 }
 
-            stats = next(container.stats(stream=True))
+            stats = container.stats(stream=False)
         
             
             # CPU 사용률 계산
@@ -100,9 +100,9 @@ class DockerService:
         except Exception:
             return {"id":container_id[:12], "status":"error"}
 
-    def get_container_logs(self, container_id: str):
-        container = self.client.containers.get(container_id)
-        return container.logs(stream=True, follow=True, tail=10)
+    # def get_container_logs(self, container_id: str):
+    #    container = self.client.containers.get(container_id)
+    #    return container.logs(stream=True, follow=True, tail=10)
 
     def get_container_logs_json(self, container_id: str):
         KST = timezone(timedelta(hours=9))

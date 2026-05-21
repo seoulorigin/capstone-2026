@@ -133,14 +133,6 @@ def restart_container(container_id: str):
 # 프론트엔드 Polling 대응을 위해 호출 시마다 랜덤한 리소스 값을 반환
 @router.get("/{container_id}/stats", response_model=ContainerStatResponse)
 async def get_container_stats(container_id: str):
-    # WS로 전환시 이 엔드포인트는 사용하지 않음. 나중에 정리차원에서 실제 데이터로 바꾸고 싶다면 이렇게 바꿈.
-    #loop = asyncio.get_event_loop()
-    #stats = await loop.run_in_executor(
-    #    executor,
-    #    docker_service.get_container_stats,
-    #    container_id
-    #)
-    #return stats
     
     return {
         "container_id": container_id,
@@ -159,25 +151,28 @@ async def websocket_metrics(websocket: WebSocket, container_id: str):
 
     loop = asyncio.get_event_loop()
     try:
-        while True:
-            try:
-                stats = await asyncio.wait_for(
-                    loop.run_in_executor(
-                        executor,
-                        docker_service.get_container_stats,
-                        container_id
-                    ),
-                    timeout = 10.0
-                )
+        #연결 직후 즉시 초기 데이터 전송 -> 프론트 연결 유지
+        await websocket.send_json({
+            "id": container_id[:12],
+            "name": "",
+            "status": "connecting",
+            "cpu_percent":0.0,
+            "memory_usage_mb":0.0,
+            "memory_limit_mb":0.0,
+            "memory_percent": 0.0,
+        })
 
-            except asyncio.TimeoutError:
-                print(f"Metrics WS Timeout: {container_id}")
-                continue
-            
+        while True:
+            stats = await loop.run_in_executor(
+                executor,
+                docker_service.get_container_stats,
+                container_id
+            )
+
             if stats:
                 await websocket.send_json(stats)
-            
-            await asyncio.sleep(3) # 3초 주기 유지
+
+            await asyncio.sleep(3)
             
     except WebSocketDisconnect:
         print(f"Metrics WS Disconnected: {container_id}")
