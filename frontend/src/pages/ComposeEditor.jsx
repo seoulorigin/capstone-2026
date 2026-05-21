@@ -26,8 +26,12 @@ const initialComposeOptions = {
       containerPort: "80",
     },
   ],
-  environmentKey: "NODE_ENV",
-  environmentValue: "production",
+  environment: [
+    {
+      key: "NODE_ENV",
+      value: "production",
+    },
+  ],
 }
 
 const initialYamlText = `services:

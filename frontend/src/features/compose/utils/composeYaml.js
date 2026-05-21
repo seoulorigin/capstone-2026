@@ -1,6 +1,10 @@
 import yaml from "js-yaml"
 
 import {
+  buildEnvironmentValues,
+  parseEnvironment,
+} from "@/features/compose/utils/composeEnvironmentUtils"
+import {
   buildPortValues,
   parsePorts,
 } from "@/features/compose/utils/composePortUtils"
@@ -13,65 +17,6 @@ function createValidationError(message) {
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value)
-}
-
-function parseEnvironment(environment) {
-  if (!environment) {
-    return {
-      environmentKey: "",
-      environmentValue: "",
-    }
-  }
-
-  if (Array.isArray(environment)) {
-    const firstEnvironment = environment[0]
-
-    if (!firstEnvironment) {
-      return {
-        environmentKey: "",
-        environmentValue: "",
-      }
-    }
-
-    if (typeof firstEnvironment !== "string") {
-      throw createValidationError(
-        "environment 배열은 KEY=VALUE 문자열 형식이어야 합니다.",
-      )
-    }
-
-    const equalIndex = firstEnvironment.indexOf("=")
-
-    if (equalIndex === -1) {
-      throw createValidationError(
-        "environment 배열은 KEY=VALUE 형식이어야 합니다.",
-      )
-    }
-
-    return {
-      environmentKey: firstEnvironment.slice(0, equalIndex),
-      environmentValue: firstEnvironment.slice(equalIndex + 1),
-    }
-  }
-
-  if (isObject(environment)) {
-    const firstKey = Object.keys(environment)[0]
-
-    if (!firstKey) {
-      return {
-        environmentKey: "",
-        environmentValue: "",
-      }
-    }
-
-    return {
-      environmentKey: firstKey,
-      environmentValue: String(environment[firstKey] ?? ""),
-    }
-  }
-
-  throw createValidationError(
-    "environment는 배열 또는 객체 형식이어야 합니다.",
-  )
 }
 
 export function convertOptionsToYaml(options) {
@@ -97,10 +42,10 @@ export function convertOptionsToYaml(options) {
     service.ports = portValues
   }
 
-  if (options.environmentKey?.trim() && options.environmentValue?.trim()) {
-    service.environment = [
-      `${options.environmentKey.trim()}=${options.environmentValue.trim()}`,
-    ]
+  const environmentValues = buildEnvironmentValues(options.environment)
+
+  if (environmentValues.length > 0) {
+    service.environment = environmentValues
   }
 
   return yaml.dump(composeObject, {
@@ -137,16 +82,13 @@ export function convertYamlToOptions(yamlText) {
   }
 
   const ports = parsePorts(service.ports)
-  const { environmentKey, environmentValue } = parseEnvironment(
-    service.environment,
-  )
+  const environment = parseEnvironment(service.environment)
 
   return {
     serviceName,
     image: service.image,
     containerName: service.container_name || "",
     ports,
-    environmentKey,
-    environmentValue,
+    environment,
   }
 }

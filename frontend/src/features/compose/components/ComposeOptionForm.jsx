@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import ComposePortFields from "@/features/compose/components/ComposePortFields"
+import ComposeEnvironmentFields from "@/features/compose/components/ComposeEnvironmentFields"
 
 const sampleOptions = {
   serviceName: "app",
@@ -13,8 +14,12 @@ const sampleOptions = {
       containerPort: "80",
     },
   ],
-  environmentKey: "NODE_ENV",
-  environmentValue: "production",
+  environment: [
+    {
+      key: "NODE_ENV",
+      value: "production",
+    },
+  ],
 }
 
 export default function ComposeOptionForm({ options, onChange }) {
@@ -62,29 +67,12 @@ export default function ComposeOptionForm({ options, onChange }) {
         onChange={(nextPorts) => updateField("ports", nextPorts)}
       />
 
-      <div className="grid gap-2">
-        <Label htmlFor="environmentKey">Environment Key</Label>
-        <Input
-          id="environmentKey"
-          value={options.environmentKey}
-          onChange={(event) =>
-            updateField("environmentKey", event.target.value)
-          }
-          placeholder="NODE_ENV"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="environmentValue">Environment Value</Label>
-        <Input
-          id="environmentValue"
-          value={options.environmentValue}
-          onChange={(event) =>
-            updateField("environmentValue", event.target.value)
-          }
-          placeholder="production"
-        />
-      </div>
+      <ComposeEnvironmentFields
+        environment={options.environment}
+        onChange={(nextEnvironment) =>
+          updateField("environment", nextEnvironment)
+        }
+      />
 
       <Button
         type="button"
