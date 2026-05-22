@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 import random
 import asyncio
+import tempfile
+import os
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -68,13 +70,27 @@ def ping():
         raise HTTPException(status_code=500, detail=f"Docker 연결 실패: {str(e)}")
 
 
-
+# SDK 방식으로  
 @router.post("/compose/up")
 async def deploy_compose(file: UploadFile = File(...)):
     try:
         yaml_text = (await file.read()).decode("utf-8")
-        result = await docker_service.deploy_compose(yaml_text)
-        return {"status": "success", "message": "Deployment started", "details":result}
+        # 임시 파일 생성 → compose_up에 파일 경로 전달
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+            f.write(yaml_text)
+            tmp_path = f.name
+
+        try:
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                None,
+                lambda: docker_service.compose_up(tmp_path, "capstone_project")
+            )
+            return {"status": "success", "message": "Deployment started", "details": result}
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+                
     except HTTPException:
         raise 
     except Exception as e:
@@ -82,7 +98,39 @@ async def deploy_compose(file: UploadFile = File(...)):
             status_code = 500,
             detail={"status": "error", "message": str(e)}
         )
-    
+# compose 중지
+@router.delete("/compose/down")
+def compose_down(project_name: str, remove_volumes: bool = False):
+    try:
+        return docker_service.compose_down(project_name, remove_volumes)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "error", "message": str(e)}
+        )
+
+# compose 컨테이너 목록
+@router.get("/compose/ps")
+def compose_ps(project_name: str):
+    try:
+        return docker_service.compose_ps(project_name)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "error", "message": str(e)}
+        )
+
+# compose 로그
+@router.get("/compose/logs")
+def compose_logs(project_name: str, service_name: str = None):
+    try:
+        return docker_service.compose_logs(project_name, service_name)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "error", "message": str(e)}
+        )
+
 # 단일 컨테이너 상태 조회
 @router.get("/{container_id}")
 def get_container(container_id: str, db: Session = Depends(get_db)):
