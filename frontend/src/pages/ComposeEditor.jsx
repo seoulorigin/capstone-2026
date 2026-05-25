@@ -118,7 +118,7 @@ export default function ComposeEditor() {
           successMessage={successMessage}
         />
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <Card className="border-slate-800 bg-slate-950/70 p-5">
             <div className="mb-5">
               <h2 className="text-lg font-medium text-slate-200">Options</h2>
