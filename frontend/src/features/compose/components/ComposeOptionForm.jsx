@@ -98,9 +98,6 @@ export default function ComposeOptionForm({ options, onChange }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-medium text-slate-200">Services</h3>
-          <p className="mt-1 text-xs text-slate-500">
-            Compose YAML의 services 하위에 생성할 service들을 관리합니다.
-          </p>
         </div>
 
         <Button type="button" variant="outline" onClick={addService}>

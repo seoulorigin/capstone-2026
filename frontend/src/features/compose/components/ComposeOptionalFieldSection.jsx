@@ -41,9 +41,6 @@ export default function ComposeOptionalFieldSection({
     <div className="space-y-3">
       <div className="border-t border-slate-800 pt-5">
         <h4 className="text-sm font-medium text-slate-200">확장 필드</h4>
-        <p className="mt-1 text-xs text-slate-500">
-          추가 service attribute는 카테고리별로 열어서 입력할 수 있습니다.
-        </p>
       </div>
 
       <div className="space-y-3">

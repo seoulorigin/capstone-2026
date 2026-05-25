@@ -122,10 +122,6 @@ export default function ComposeEditor() {
           <Card className="border-slate-800 bg-slate-950/70 p-5">
             <div className="mb-5">
               <h2 className="text-lg font-medium text-slate-200">Options</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                여러 service의 Options 입력값을 기준으로 Docker Compose
-                YAML을 생성합니다.
-              </p>
             </div>
 
             <ComposeOptionForm

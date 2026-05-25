@@ -14,7 +14,7 @@ export default function ComposeSyncControl({ onGenerateYaml }) {
           className="w-full border-slate-700 bg-slate-950 text-base font-semibold text-slate-200 hover:bg-slate-800 hover:text-slate-50 xl:w-auto"
         >
           <FileCode2 className="mr-2 size-5" />
-          YAML 생성
+          YAML 변환
         </Button>
       </div>
     </div>
