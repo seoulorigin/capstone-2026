@@ -12,7 +12,7 @@ function normalizePorts(ports) {
   return Array.isArray(ports) ? ports : []
 }
 
-export default function ComposePortFields({ ports, onChange }) {
+export default function ComposePortFields({ idPrefix = "compose", ports, onChange }) {
   const normalizedPorts = normalizePorts(ports)
 
   const updatePort = (index, field, value) => {
@@ -52,9 +52,9 @@ export default function ComposePortFields({ ports, onChange }) {
       renderItem={(port, index) => (
         <>
           <div className="grid gap-2">
-            <Label htmlFor={`hostPort-${index}`}>Host Port</Label>
+            <Label htmlFor={`${idPrefix}-hostPort-${index}`}>Host Port</Label>
             <Input
-              id={`hostPort-${index}`}
+              id={`${idPrefix}-hostPort-${index}`}
               value={port.hostPort ?? ""}
               onChange={(event) =>
                 updatePort(index, "hostPort", event.target.value)
@@ -64,9 +64,11 @@ export default function ComposePortFields({ ports, onChange }) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor={`containerPort-${index}`}>Container Port</Label>
+            <Label htmlFor={`${idPrefix}-containerPort-${index}`}>
+              Container Port
+            </Label>
             <Input
-              id={`containerPort-${index}`}
+              id={`${idPrefix}-containerPort-${index}`}
               value={port.containerPort ?? ""}
               onChange={(event) =>
                 updatePort(index, "containerPort", event.target.value)

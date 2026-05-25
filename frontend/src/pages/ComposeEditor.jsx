@@ -17,19 +17,24 @@ import {
 } from "@/features/compose/utils/composeYaml"
 
 const initialComposeOptions = {
-  serviceName: "app",
-  image: "nginx:latest",
-  containerName: "my-container",
-  ports: [
+  services: [
     {
-      hostPort: "8080",
-      containerPort: "80",
-    },
-  ],
-  environment: [
-    {
-      key: "NODE_ENV",
-      value: "production",
+      id: "service-1",
+      serviceName: "app",
+      image: "nginx:latest",
+      containerName: "my-container",
+      ports: [
+        {
+          hostPort: "8080",
+          containerPort: "80",
+        },
+      ],
+      environment: [
+        {
+          key: "NODE_ENV",
+          value: "production",
+        },
+      ],
     },
   ],
 }
@@ -118,7 +123,8 @@ export default function ComposeEditor() {
             <div className="mb-5">
               <h2 className="text-lg font-medium text-slate-200">Options</h2>
               <p className="mt-1 text-sm text-slate-500">
-                Options 입력값을 기준으로 Docker Compose YAML을 생성합니다.
+                여러 service의 Options 입력값을 기준으로 Docker Compose
+                YAML을 생성합니다.
               </p>
             </div>
 
