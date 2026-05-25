@@ -1,9 +1,10 @@
-// Compose service 하나의 기본 입력 필드를 렌더링합니다.
+// Compose service 하나의 기본 입력 필드와 확장 필드 섹션을 렌더링합니다.
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import ComposePortFields from "@/features/compose/components/ComposePortFields"
 import ComposeEnvironmentFields from "@/features/compose/components/ComposeEnvironmentFields"
+import ComposeOptionalFieldSection from "@/features/compose/components/ComposeOptionalFieldSection"
+import ComposePortFields from "@/features/compose/components/ComposePortFields"
 
 export default function ComposeServiceFields({
   service,
@@ -90,6 +91,14 @@ export default function ComposeServiceFields({
         environment={service.environment}
         onChange={(nextEnvironment) =>
           updateField("environment", nextEnvironment)
+        }
+      />
+
+      <ComposeOptionalFieldSection
+        idPrefix={idPrefix}
+        optionalFields={service.optionalFields}
+        onChange={(nextOptionalFields) =>
+          updateField("optionalFields", nextOptionalFields)
         }
       />
     </div>
