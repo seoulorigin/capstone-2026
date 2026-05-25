@@ -20,10 +20,18 @@ const initialComposeOptions = {
   serviceName: "app",
   image: "nginx:latest",
   containerName: "my-container",
-  hostPort: "8080",
-  containerPort: "80",
-  environmentKey: "NODE_ENV",
-  environmentValue: "production",
+  ports: [
+    {
+      hostPort: "8080",
+      containerPort: "80",
+    },
+  ],
+  environment: [
+    {
+      key: "NODE_ENV",
+      value: "production",
+    },
+  ],
 }
 
 const initialYamlText = `services:
