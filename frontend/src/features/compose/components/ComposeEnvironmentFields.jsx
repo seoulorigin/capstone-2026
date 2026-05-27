@@ -12,7 +12,11 @@ function normalizeEnvironment(environment) {
   return Array.isArray(environment) ? environment : []
 }
 
-export default function ComposeEnvironmentFields({ environment, onChange }) {
+export default function ComposeEnvironmentFields({
+  idPrefix = "compose",
+  environment,
+  onChange,
+}) {
   const normalizedEnvironment = normalizeEnvironment(environment)
 
   const updateEnvironment = (index, field, value) => {
@@ -54,9 +58,9 @@ export default function ComposeEnvironmentFields({ environment, onChange }) {
       renderItem={(environmentItem, index) => (
         <>
           <div className="grid gap-2">
-            <Label htmlFor={`environmentKey-${index}`}>Key</Label>
+            <Label htmlFor={`${idPrefix}-environmentKey-${index}`}>Key</Label>
             <Input
-              id={`environmentKey-${index}`}
+              id={`${idPrefix}-environmentKey-${index}`}
               value={environmentItem.key ?? ""}
               onChange={(event) =>
                 updateEnvironment(index, "key", event.target.value)
@@ -66,9 +70,11 @@ export default function ComposeEnvironmentFields({ environment, onChange }) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor={`environmentValue-${index}`}>Value</Label>
+            <Label htmlFor={`${idPrefix}-environmentValue-${index}`}>
+              Value
+            </Label>
             <Input
-              id={`environmentValue-${index}`}
+              id={`${idPrefix}-environmentValue-${index}`}
               value={environmentItem.value ?? ""}
               onChange={(event) =>
                 updateEnvironment(index, "value", event.target.value)

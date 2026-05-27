@@ -1,5 +1,5 @@
 // src/pages/ComposeEditor.jsx
-// Compose Editor 페이지의 상태, 동기화, 배포 흐름을 관리합니다.
+// Compose Editor 페이지의 상태, YAML 생성, 배포 흐름을 관리합니다.
 import { useState } from "react"
 
 import MainLayout from "@/layouts/MainLayout"
@@ -13,30 +13,33 @@ import ComposeYamlEditorPanel from "@/features/compose/components/ComposeYamlEdi
 import { Card } from "@/components/ui/card"
 import {
   convertOptionsToYaml,
-  convertYamlToOptions,
+  validateYamlSyntax,
 } from "@/features/compose/utils/composeYaml"
 
 const initialComposeOptions = {
-  serviceName: "app",
-  image: "nginx:latest",
-  containerName: "my-container",
-  ports: [
+  services: [
     {
-      hostPort: "8080",
-      containerPort: "80",
-    },
-  ],
-  environment: [
-    {
-      key: "NODE_ENV",
-      value: "production",
+      id: "service-1",
+      serviceName: "app",
+      image: "nginx:latest",
+      containerName: "my-container",
+      ports: [
+        {
+          hostPort: "8080",
+          containerPort: "80",
+        },
+      ],
+      environment: [
+        {
+          key: "NODE_ENV",
+          value: "production",
+        },
+      ],
     },
   ],
 }
 
-const initialYamlText = `services:
-  app:
-    image: nginx:latest`
+const initialYamlText = convertOptionsToYaml(initialComposeOptions)
 
 function getErrorMessage(error) {
   return (
@@ -50,13 +53,9 @@ function getErrorMessage(error) {
 export default function ComposeEditor() {
   const [composeOptions, setComposeOptions] = useState(initialComposeOptions)
   const [yamlText, setYamlText] = useState(initialYamlText)
-  const [lastEditedSource, setLastEditedSource] = useState("options")
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
   const [isDeploying, setIsDeploying] = useState(false)
-
-  const syncButtonLabel =
-    lastEditedSource === "options" ? "YAML에 반영" : "옵션에 반영"
 
   const resetMessages = () => {
     setErrorMessage("")
@@ -65,42 +64,24 @@ export default function ComposeEditor() {
 
   const handleComposeOptionsChange = (nextOptions) => {
     setComposeOptions(nextOptions)
-    setLastEditedSource("options")
     resetMessages()
   }
 
   const handleYamlTextChange = (value) => {
     setYamlText(value || "")
-    setLastEditedSource("yaml")
     resetMessages()
   }
 
-  const handleOptionsToYaml = () => {
-    const nextYaml = convertOptionsToYaml(composeOptions)
-
-    setYamlText(nextYaml)
-    resetMessages()
-  }
-
-  const handleYamlToOptions = () => {
+  const handleGenerateYaml = () => {
     try {
-      const nextOptions = convertYamlToOptions(yamlText)
+      const nextYaml = convertOptionsToYaml(composeOptions)
 
-      setComposeOptions(nextOptions)
+      setYamlText(nextYaml)
       resetMessages()
     } catch {
-      setErrorMessage("YAML 문법 또는 지원하지 않는 Compose 구조입니다.")
+      setErrorMessage("Options 값을 YAML로 변환하는 중 오류가 발생했습니다.")
       setSuccessMessage("")
     }
-  }
-
-  const handleSyncCompose = () => {
-    if (lastEditedSource === "options") {
-      handleOptionsToYaml()
-      return
-    }
-
-    handleYamlToOptions()
   }
 
   const handleDeployCompose = async () => {
@@ -108,7 +89,7 @@ export default function ComposeEditor() {
       setIsDeploying(true)
       resetMessages()
 
-      convertYamlToOptions(yamlText)
+      validateYamlSyntax(yamlText)
 
       const result = await deployComposeYaml(yamlText)
 
@@ -137,13 +118,10 @@ export default function ComposeEditor() {
           successMessage={successMessage}
         />
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <Card className="border-slate-800 bg-slate-950/70 p-5">
             <div className="mb-5">
               <h2 className="text-lg font-medium text-slate-200">Options</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                MVP 단계에서는 단일 service 기준 필드만 지원합니다.
-              </p>
             </div>
 
             <ComposeOptionForm
@@ -152,10 +130,7 @@ export default function ComposeEditor() {
             />
           </Card>
 
-          <ComposeSyncControl
-            label={syncButtonLabel}
-            onSync={handleSyncCompose}
-          />
+          <ComposeSyncControl onGenerateYaml={handleGenerateYaml} />
 
           <ComposeYamlEditorPanel
             yamlText={yamlText}

@@ -5,12 +5,12 @@ import { Card } from "@/components/ui/card"
 
 export default function ComposeYamlEditorPanel({ yamlText, onChange }) {
   return (
-    <Card className="overflow-hidden border-slate-800 bg-slate-950/70 p-0">
+    <Card className="flex h-full min-h-[560px] flex-col overflow-hidden border-slate-800 bg-slate-950/70 p-0">
       <div className="border-b border-slate-800 px-4 py-3">
         <h2 className="text-lg font-medium text-slate-200">YAML Editor</h2>
       </div>
 
-      <div className="h-[560px]">
+      <div className="min-h-[560px] flex-1">
         <Editor
           height="100%"
           defaultLanguage="yaml"
