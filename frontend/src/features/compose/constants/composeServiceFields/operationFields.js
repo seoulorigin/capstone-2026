@@ -11,6 +11,33 @@ export const operationFields = [
     placeholder: "backend",
   },
   {
+    key: "extends",
+    yamlKey: "extends",
+    label: "Extends",
+    description:
+      "다른 Compose service 설정을 확장합니다.",
+    category: "operation",
+    type: "object",
+    fields: [
+      {
+        key: "file",
+        yamlKey: "file",
+        label: "File",
+        description: "확장할 service가 정의된 Compose 파일 경로입니다.",
+        type: "text",
+        placeholder: "common.yml",
+      },
+      {
+        key: "service",
+        yamlKey: "service",
+        label: "Service",
+        description: "확장할 service 이름입니다.",
+        type: "text",
+        placeholder: "webapp",
+      },
+    ],
+  },
+  {
     key: "networks",
     yamlKey: "networks",
     label: "Networks",
@@ -21,6 +48,15 @@ export const operationFields = [
     placeholder: "app-network",
   },
   {
+    key: "platform",
+    yamlKey: "platform",
+    label: "Platform",
+    description: "service image/build에 사용할 대상 플랫폼입니다.",
+    category: "operation",
+    type: "text",
+    placeholder: "linux/amd64",
+  },
+  {
     key: "profiles",
     yamlKey: "profiles",
     label: "Profiles",
@@ -28,6 +64,35 @@ export const operationFields = [
     category: "operation",
     type: "list",
     placeholder: "dev",
+  },
+  {
+    key: "labels",
+    yamlKey: "labels",
+    label: "Labels",
+    description:
+      "컨테이너에 추가할 label 목록입니다.",
+    category: "operation",
+    type: "list",
+    placeholder: "com.example.description=frontend",
+  },
+  {
+    key: "labelFile",
+    yamlKey: "label_file",
+    label: "Label File",
+    description: "label을 불러올 파일 경로 목록입니다.",
+    category: "operation",
+    type: "list",
+    placeholder: "./labels.env",
+  },
+  {
+    key: "annotations",
+    yamlKey: "annotations",
+    label: "Annotations",
+    description:
+      "service에 추가할 annotation 목록입니다.",
+    category: "operation",
+    type: "list",
+    placeholder: "com.example.owner=team-a",
   },
   {
     key: "links",
@@ -139,7 +204,8 @@ export const operationFields = [
         key: "options",
         yamlKey: "options",
         label: "Options",
-        description: "logging driver 옵션입니다.",
+        description:
+          "logging driver 옵션입니다.",
         type: "object",
         fields: [
           {
