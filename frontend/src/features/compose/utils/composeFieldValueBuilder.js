@@ -59,7 +59,7 @@ function buildObjectValue(field, value) {
 
   field.fields?.forEach((objectField) => {
     const objectFieldValue = value[objectField.key]
-    const nextValue = buildTextValue(objectFieldValue)
+    const nextValue = buildComposeFieldValue(objectField, objectFieldValue)
 
     if (nextValue === null) {
       return

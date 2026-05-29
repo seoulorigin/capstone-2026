@@ -15,6 +15,14 @@ function normalizeObject(value) {
   return isPlainObject(value) ? value : {}
 }
 
+function renderFieldDescription(description) {
+  if (!description) {
+    return null
+  }
+
+  return <p className="text-xs text-slate-500">{description}</p>
+}
+
 export default function ComposeDynamicField({
   idPrefix = "compose",
   field,
@@ -27,6 +35,7 @@ export default function ComposeDynamicField({
     return (
       <div className="grid gap-2">
         <Label htmlFor={fieldId}>{field.label}</Label>
+
         <select
           id={fieldId}
           value={value ?? ""}
@@ -40,9 +49,7 @@ export default function ComposeDynamicField({
           ))}
         </select>
 
-        {field.description && (
-          <p className="text-xs text-slate-500">{field.description}</p>
-        )}
+        {renderFieldDescription(field.description)}
       </div>
     )
   }
@@ -170,22 +177,17 @@ export default function ComposeDynamicField({
           )}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-3">
           {field.fields?.map((objectField) => (
-            <div key={objectField.key} className="grid gap-2">
-              <Label htmlFor={`${fieldId}-${objectField.key}`}>
-                {objectField.label}
-              </Label>
-
-              <Input
-                id={`${fieldId}-${objectField.key}`}
-                value={objectValue[objectField.key] ?? ""}
-                onChange={(event) =>
-                  updateObjectField(objectField, event.target.value)
-                }
-                placeholder={objectField.placeholder}
-              />
-            </div>
+            <ComposeDynamicField
+              key={objectField.key}
+              idPrefix={fieldId}
+              field={objectField}
+              value={objectValue[objectField.key]}
+              onChange={(nextValue) =>
+                updateObjectField(objectField, nextValue)
+              }
+            />
           ))}
         </div>
       </div>
@@ -203,9 +205,7 @@ export default function ComposeDynamicField({
         placeholder={field.placeholder}
       />
 
-      {field.description && (
-        <p className="text-xs text-slate-500">{field.description}</p>
-      )}
+      {renderFieldDescription(field.description)}
     </div>
   )
 }
