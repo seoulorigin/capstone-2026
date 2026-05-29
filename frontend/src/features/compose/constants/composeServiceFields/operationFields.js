@@ -57,6 +57,35 @@ export const operationFields = [
     placeholder: "linux/amd64",
   },
   {
+    key: "models",
+    yamlKey: "models",
+    label: "Models",
+    description:
+      "service가 런타임에 사용할 model 이름 목록입니다.",
+    category: "operation",
+    type: "list",
+    placeholder: "my_model",
+  },
+  {
+    key: "provider",
+    yamlKey: "provider",
+    label: "Provider",
+    description:
+      "Compose가 직접 관리하지 않는 외부 provider service 설정입니다.",
+    category: "operation",
+    type: "object",
+    fields: [
+      {
+        key: "type",
+        yamlKey: "type",
+        label: "Type",
+        description: "service lifecycle을 위임할 provider type입니다.",
+        type: "text",
+        placeholder: "awesomecloud",
+      },
+    ],
+  },
+  {
     key: "profiles",
     yamlKey: "profiles",
     label: "Profiles",
