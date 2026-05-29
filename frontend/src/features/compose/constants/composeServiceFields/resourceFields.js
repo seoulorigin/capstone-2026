@@ -153,6 +153,16 @@ export const resourceFields = [
     placeholder: "64m",
   },
   {
+    key: "gpus",
+    yamlKey: "gpus",
+    label: "GPUs",
+    description:
+      "컨테이너에서 사용할 GPU 설정입니다.",
+    category: "resource",
+    type: "text",
+    placeholder: "all",
+  },
+  {
     key: "blkioConfig",
     yamlKey: "blkio_config",
     label: "Block IO Config",

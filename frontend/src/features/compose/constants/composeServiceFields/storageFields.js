@@ -29,6 +29,25 @@ export const storageFields = [
     placeholder: "/tmp",
   },
   {
+    key: "storageOpt",
+    yamlKey: "storage_opt",
+    label: "Storage Options",
+    description:
+      "컨테이너 스토리지 드라이버 옵션입니다.",
+    category: "storage",
+    type: "object",
+    fields: [
+      {
+        key: "size",
+        yamlKey: "size",
+        label: "Size",
+        description: "컨테이너 root filesystem 크기 제한 값입니다.",
+        type: "text",
+        placeholder: "1G",
+      },
+    ],
+  },
+  {
     key: "configs",
     yamlKey: "configs",
     label: "Configs",
