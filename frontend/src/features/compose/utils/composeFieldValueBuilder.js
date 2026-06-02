@@ -54,6 +54,52 @@ function buildListValue(value) {
   return listValue.length > 0 ? listValue : null
 }
 
+function parseKeyValueItem(item) {
+  if (typeof item !== "string") {
+    return null
+  }
+
+  const trimmedItem = item.trim()
+
+  if (!trimmedItem) {
+    return null
+  }
+
+  const separatorIndex = trimmedItem.indexOf("=")
+
+  if (separatorIndex <= 0) {
+    return null
+  }
+
+  const key = trimmedItem.slice(0, separatorIndex).trim()
+  const value = trimmedItem.slice(separatorIndex + 1).trim()
+
+  if (!key || !value) {
+    return null
+  }
+
+  return {
+    key,
+    value,
+  }
+}
+
+function buildKeyValueListValue(value) {
+  const result = {}
+
+  normalizeList(value).forEach((item) => {
+    const parsedItem = parseKeyValueItem(item)
+
+    if (parsedItem === null) {
+      return
+    }
+
+    result[parsedItem.key] = parsedItem.value
+  })
+
+  return Object.keys(result).length > 0 ? result : null
+}
+
 function buildObjectValue(field, value) {
   if (!isPlainObject(value)) {
     return null
@@ -94,6 +140,10 @@ export function buildComposeFieldValue(field, value) {
 
   if (field.type === "list") {
     return buildListValue(value)
+  }
+
+  if (field.type === "keyValueList") {
+    return buildKeyValueListValue(value)
   }
 
   if (field.type === "object") {
