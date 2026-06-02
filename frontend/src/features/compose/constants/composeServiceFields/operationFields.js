@@ -4,8 +4,7 @@ export const operationFields = [
     key: "dependsOn",
     yamlKey: "depends_on",
     label: "Depends On",
-    description:
-      "현재 service가 의존하는 service 이름 목록입니다.",
+    description: "현재 service가 의존하는 service 이름 목록입니다.",
     category: "operation",
     type: "list",
     placeholder: "backend",
@@ -14,8 +13,7 @@ export const operationFields = [
     key: "extends",
     yamlKey: "extends",
     label: "Extends",
-    description:
-      "다른 Compose service 설정을 확장합니다.",
+    description: "다른 Compose service 설정을 확장합니다.",
     category: "operation",
     type: "object",
     fields: [
@@ -41,8 +39,7 @@ export const operationFields = [
     key: "networks",
     yamlKey: "networks",
     label: "Networks",
-    description:
-      "service가 참여할 network 이름 목록입니다.",
+    description: "service가 참여할 network 이름 목록입니다.",
     category: "operation",
     type: "list",
     placeholder: "app-network",
@@ -60,8 +57,7 @@ export const operationFields = [
     key: "models",
     yamlKey: "models",
     label: "Models",
-    description:
-      "service가 런타임에 사용할 model 이름 목록입니다.",
+    description: "service가 런타임에 사용할 model 이름 목록입니다.",
     category: "operation",
     type: "list",
     placeholder: "my_model",
@@ -70,8 +66,7 @@ export const operationFields = [
     key: "provider",
     yamlKey: "provider",
     label: "Provider",
-    description:
-      "Compose가 직접 관리하지 않는 외부 provider service 설정입니다.",
+    description: "Compose가 직접 관리하지 않는 외부 provider service 설정입니다.",
     category: "operation",
     type: "object",
     fields: [
@@ -82,6 +77,71 @@ export const operationFields = [
         description: "service lifecycle을 위임할 provider type입니다.",
         type: "text",
         placeholder: "awesomecloud",
+      },
+    ],
+  },
+  {
+    key: "develop",
+    yamlKey: "develop",
+    label: "Develop",
+    description:
+      "개발 중 파일 변경 감지 설정입니다.",
+    category: "operation",
+    type: "object",
+    fields: [
+      {
+        key: "watch",
+        yamlKey: "watch",
+        label: "Watch",
+        description:
+          "개발 중 감시할 파일/디렉터리 목록입니다. 각 항목은 object 형태로 생성됩니다.",
+        type: "objectList",
+        fields: [
+          {
+            key: "action",
+            yamlKey: "action",
+            label: "Action",
+            description: "파일 변경 시 수행할 동작입니다.",
+            type: "select",
+            options: [
+              { label: "선택 안 함", value: "" },
+              { label: "sync", value: "sync" },
+              { label: "rebuild", value: "rebuild" },
+              { label: "sync+restart", value: "sync+restart" },
+            ],
+          },
+          {
+            key: "path",
+            yamlKey: "path",
+            label: "Path",
+            description: "호스트에서 감시할 파일 또는 디렉터리 경로입니다.",
+            type: "text",
+            placeholder: "./src",
+          },
+          {
+            key: "target",
+            yamlKey: "target",
+            label: "Target",
+            description: "컨테이너 내부 동기화 대상 경로입니다.",
+            type: "text",
+            placeholder: "/app/src",
+          },
+          {
+            key: "ignore",
+            yamlKey: "ignore",
+            label: "Ignore",
+            description: "감시 또는 동기화에서 제외할 경로 목록입니다.",
+            type: "list",
+            placeholder: "node_modules/",
+          },
+          {
+            key: "initialSync",
+            yamlKey: "initial_sync",
+            label: "Initial Sync",
+            description: "watch 시작 시 초기 동기화를 수행합니다.",
+            type: "boolean",
+          },
+        ],
       },
     ],
   },
@@ -98,8 +158,7 @@ export const operationFields = [
     key: "labels",
     yamlKey: "labels",
     label: "Labels",
-    description:
-      "컨테이너에 추가할 label 목록입니다.",
+    description: "컨테이너에 추가할 label 목록입니다.",
     category: "operation",
     type: "list",
     placeholder: "com.example.description=frontend",
@@ -117,8 +176,7 @@ export const operationFields = [
     key: "annotations",
     yamlKey: "annotations",
     label: "Annotations",
-    description:
-      "service에 추가할 annotation 목록입니다.",
+    description: "service에 추가할 annotation 목록입니다.",
     category: "operation",
     type: "list",
     placeholder: "com.example.owner=team-a",
@@ -145,8 +203,7 @@ export const operationFields = [
     key: "healthcheck",
     yamlKey: "healthcheck",
     label: "Healthcheck",
-    description:
-      "컨테이너 상태 확인 설정입니다.",
+    description: "컨테이너 상태 확인 설정입니다.",
     category: "operation",
     type: "object",
     fields: [
@@ -204,8 +261,7 @@ export const operationFields = [
     key: "logging",
     yamlKey: "logging",
     label: "Logging",
-    description:
-      "컨테이너 logging driver 설정입니다.",
+    description: "컨테이너 logging driver 설정입니다.",
     category: "operation",
     type: "object",
     fields: [
@@ -233,8 +289,7 @@ export const operationFields = [
         key: "options",
         yamlKey: "options",
         label: "Options",
-        description:
-          "logging driver 옵션입니다.",
+        description: "logging driver 옵션입니다.",
         type: "object",
         fields: [
           {
@@ -269,8 +324,7 @@ export const operationFields = [
     key: "deploy",
     yamlKey: "deploy",
     label: "Deploy",
-    description:
-      "배포 관련 설정입니다.",
+    description: "배포 관련 설정입니다.",
     category: "operation",
     type: "object",
     fields: [
