@@ -133,6 +133,40 @@ function buildObjectListValue(field, value) {
   return objectListValue.length > 0 ? objectListValue : null
 }
 
+function buildNamedObjectListValue(field, value) {
+  const nameKey = field.nameKey ?? "name"
+  const result = {}
+
+  normalizeObjectList(value).forEach((item) => {
+    const name = buildTextValue(item[nameKey])
+
+    if (name === null) {
+      return
+    }
+
+    const entry = {}
+
+    field.fields?.forEach((objectField) => {
+      if (objectField.key === nameKey) {
+        return
+      }
+
+      const objectFieldValue = item[objectField.key]
+      const nextValue = buildComposeFieldValue(objectField, objectFieldValue)
+
+      if (nextValue === null) {
+        return
+      }
+
+      entry[objectField.yamlKey] = nextValue
+    })
+
+    result[name] = entry
+  })
+
+  return Object.keys(result).length > 0 ? result : null
+}
+
 export function buildComposeFieldValue(field, value) {
   if (field.type === "boolean") {
     return buildBooleanValue(value)
@@ -152,6 +186,10 @@ export function buildComposeFieldValue(field, value) {
 
   if (field.type === "objectList") {
     return buildObjectListValue(field, value)
+  }
+
+  if (field.type === "namedObjectList") {
+    return buildNamedObjectListValue(field, value)
   }
 
   return buildTextValue(value)

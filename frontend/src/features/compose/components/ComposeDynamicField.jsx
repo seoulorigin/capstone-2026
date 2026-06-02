@@ -186,7 +186,7 @@ export default function ComposeDynamicField({
     })
   }
 
-  if (field.type === "objectList") {
+  if (field.type === "objectList" || field.type === "namedObjectList") {
     const objectListValue = normalizeObjectList(value)
 
     const addItem = () => {

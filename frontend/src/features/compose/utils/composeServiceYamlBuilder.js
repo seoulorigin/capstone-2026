@@ -5,6 +5,7 @@ import { buildComposeFieldValue } from "@/features/compose/utils/composeFieldVal
 import { buildPortValues } from "@/features/compose/utils/composePortUtils"
 
 const DEFAULT_SERVICE_NAME = "app"
+const NETWORKS_ADVANCED_FIELD_KEY = "networksAdvanced"
 
 function normalizeServices(services) {
   return Array.isArray(services) ? services : []
@@ -28,8 +29,18 @@ function createServiceName(rawServiceName, index, usedServiceNames) {
   return serviceName
 }
 
+function getOptionalFieldDefinition(fieldKey) {
+  return COMPOSE_SERVICE_FIELD_DEFINITIONS.find((field) => {
+    return field.key === fieldKey
+  })
+}
+
 function applyOptionalFields(serviceYaml, optionalFields = {}) {
   COMPOSE_SERVICE_FIELD_DEFINITIONS.forEach((field) => {
+    if (field.key === NETWORKS_ADVANCED_FIELD_KEY) {
+      return
+    }
+
     const fieldValue = buildComposeFieldValue(field, optionalFields[field.key])
 
     if (fieldValue === null) {
@@ -38,6 +49,27 @@ function applyOptionalFields(serviceYaml, optionalFields = {}) {
 
     serviceYaml[field.yamlKey] = fieldValue
   })
+}
+
+function applyNetworksAdvancedField(serviceYaml, optionalFields = {}) {
+  const networksAdvancedField = getOptionalFieldDefinition(
+    NETWORKS_ADVANCED_FIELD_KEY,
+  )
+
+  if (!networksAdvancedField) {
+    return
+  }
+
+  const networksAdvancedValue = buildComposeFieldValue(
+    networksAdvancedField,
+    optionalFields[NETWORKS_ADVANCED_FIELD_KEY],
+  )
+
+  if (networksAdvancedValue === null) {
+    return
+  }
+
+  serviceYaml[networksAdvancedField.yamlKey] = networksAdvancedValue
 }
 
 function buildServiceObject(serviceOptions) {
@@ -52,6 +84,7 @@ function buildServiceObject(serviceOptions) {
   }
 
   applyOptionalFields(serviceYaml, serviceOptions.optionalFields)
+  applyNetworksAdvancedField(serviceYaml, serviceOptions.optionalFields)
 
   const portValues = buildPortValues(serviceOptions.ports)
 

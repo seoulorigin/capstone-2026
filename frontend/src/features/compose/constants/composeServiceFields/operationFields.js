@@ -45,6 +45,60 @@ export const operationFields = [
     placeholder: "app-network",
   },
   {
+    key: "networksAdvanced",
+    yamlKey: "networks",
+    label: "Networks Long Syntax",
+    description:
+      "network별 상세 설정입니다. 입력 시 기존 Networks short syntax보다 우선 적용됩니다.",
+    category: "operation",
+    type: "namedObjectList",
+    nameKey: "name",
+    fields: [
+      {
+        key: "name",
+        yamlKey: "name",
+        label: "Network Name",
+        description: "service가 참여할 network 이름입니다.",
+        type: "text",
+        placeholder: "app-network",
+      },
+      {
+        key: "aliases",
+        yamlKey: "aliases",
+        label: "Aliases",
+        description: "해당 network 안에서 사용할 service alias 목록입니다.",
+        type: "list",
+        placeholder: "frontend",
+      },
+      {
+        key: "ipv4Address",
+        yamlKey: "ipv4_address",
+        label: "IPv4 Address",
+        description: "해당 network에서 사용할 고정 IPv4 주소입니다.",
+        type: "text",
+        placeholder: "172.20.0.10",
+      },
+      {
+        key: "ipv6Address",
+        yamlKey: "ipv6_address",
+        label: "IPv6 Address",
+        description: "해당 network에서 사용할 고정 IPv6 주소입니다.",
+        type: "text",
+        placeholder: "2001:db8::10",
+      },
+      {
+        key: "driverOpts",
+        yamlKey: "driver_opts",
+        label: "Driver Options",
+        description:
+          "network driver 옵션입니다. KEY=VALUE 목록을 YAML object로 변환합니다.",
+        type: "keyValueList",
+        placeholder:
+          "com.docker.network.bridge.host_binding_ipv4=127.0.0.1",
+      },
+    ],
+  },
+  {
     key: "platform",
     yamlKey: "platform",
     label: "Platform",
