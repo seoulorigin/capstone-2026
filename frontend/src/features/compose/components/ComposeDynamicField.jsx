@@ -15,6 +15,10 @@ function normalizeObject(value) {
   return isPlainObject(value) ? value : {}
 }
 
+function normalizeObjectList(value) {
+  return Array.isArray(value) ? value.filter(isPlainObject) : []
+}
+
 function renderFieldDescription(description) {
   if (!description) {
     return null
@@ -149,6 +153,101 @@ export default function ComposeDynamicField({
                 >
                   삭제
                 </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (field.type === "objectList") {
+    const objectListValue = normalizeObjectList(value)
+
+    const addItem = () => {
+      onChange([...objectListValue, {}])
+    }
+
+    const removeItem = (index) => {
+      const nextList = objectListValue.filter((_, itemIndex) => {
+        return itemIndex !== index
+      })
+
+      onChange(nextList)
+    }
+
+    const updateObjectListField = (index, objectField, nextValue) => {
+      const nextList = objectListValue.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item
+        }
+
+        return {
+          ...item,
+          [objectField.key]: nextValue,
+        }
+      })
+
+      onChange(nextList)
+    }
+
+    return (
+      <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Label>{field.label}</Label>
+
+            {field.description && (
+              <p className="mt-1 text-xs text-slate-500">
+                {field.description}
+              </p>
+            )}
+          </div>
+
+          <Button type="button" variant="outline" size="sm" onClick={addItem}>
+            항목 추가
+          </Button>
+        </div>
+
+        {objectListValue.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-800 px-3 py-3 text-sm text-slate-500">
+            추가된 값이 없습니다.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {objectListValue.map((item, index) => (
+              <div
+                key={`${fieldId}-${index}`}
+                className="space-y-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-medium text-slate-400">
+                    항목 {index + 1}
+                  </p>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeItem(index)}
+                  >
+                    삭제
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {field.fields?.map((objectField) => (
+                    <ComposeDynamicField
+                      key={objectField.key}
+                      idPrefix={`${fieldId}-${index}`}
+                      field={objectField}
+                      value={item[objectField.key]}
+                      onChange={(nextValue) =>
+                        updateObjectListField(index, objectField, nextValue)
+                      }
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </div>

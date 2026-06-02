@@ -8,6 +8,10 @@ function normalizeList(value) {
   return Array.isArray(value) ? value : []
 }
 
+function normalizeObjectList(value) {
+  return Array.isArray(value) ? value.filter(isPlainObject) : []
+}
+
 function isEmptyFieldValue(value) {
   if (value === undefined || value === null || value === "") {
     return true
@@ -71,6 +75,18 @@ function buildObjectValue(field, value) {
   return Object.keys(result).length > 0 ? result : null
 }
 
+function buildObjectListValue(field, value) {
+  const objectListValue = normalizeObjectList(value)
+    .map((item) => {
+      return buildObjectValue(field, item)
+    })
+    .filter((item) => {
+      return item !== null
+    })
+
+  return objectListValue.length > 0 ? objectListValue : null
+}
+
 export function buildComposeFieldValue(field, value) {
   if (field.type === "boolean") {
     return buildBooleanValue(value)
@@ -82,6 +98,10 @@ export function buildComposeFieldValue(field, value) {
 
   if (field.type === "object") {
     return buildObjectValue(field, value)
+  }
+
+  if (field.type === "objectList") {
+    return buildObjectListValue(field, value)
   }
 
   return buildTextValue(value)
