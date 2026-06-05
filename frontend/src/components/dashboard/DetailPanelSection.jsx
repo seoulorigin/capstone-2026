@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import MetricsPreviewPanel from "@/components/dashboard/MetricsPreviewPanel"
 import LogsPreviewPanel from "@/components/dashboard/LogsPreviewPanel"
 import PanelMessage from "@/components/dashboard/PanelMessage"
-import { useContainerStats } from "@/hooks/useContainerStats"
+import { useContainerMetricHistory } from "@/hooks/useContainerMetricHistory"
 
 // 선택된 컨테이너의 메트릭 또는 로그 영역을 표시한다.
 export default function DetailPanelSection({
@@ -14,14 +14,12 @@ export default function DetailPanelSection({
   const selectedContainerId =
     selectedContainer?.container_id ?? selectedContainer?.id ?? null
 
+  const metricsResult = useContainerMetricHistory(selectedContainer)
+
   const {
-    data: stats,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useContainerStats(selectedContainerId)
+    connectionStatus: metricsConnectionStatus = "idle",
+    reconnect: reconnectMetrics = () => {},
+  } = metricsResult ?? {}
 
   return (
     <section>
@@ -70,11 +68,16 @@ export default function DetailPanelSection({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => refetch()}
-                  disabled={!selectedContainerId || isFetching}
+                  onClick={reconnectMetrics}
+                  disabled={
+                    !selectedContainerId ||
+                    metricsConnectionStatus === "connecting"
+                  }
                   className="h-8 border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 transition-all duration-150 hover:-translate-y-[1px] hover:bg-slate-800 hover:text-slate-50 disabled:opacity-50"
                 >
-                  {isFetching ? "..." : "새로고침"}
+                  {metricsConnectionStatus === "connecting"
+                    ? "연결 중"
+                    : "WS 재연결"}
                 </Button>
               ) : null}
             </div>
@@ -88,10 +91,7 @@ export default function DetailPanelSection({
             <MetricsPreviewPanel
               selectedContainer={selectedContainer}
               selectedContainerId={selectedContainerId}
-              stats={stats}
-              isLoading={isLoading}
-              isError={isError}
-              error={error}
+              metricsResult={metricsResult}
             />
           ) : (
             <LogsPreviewPanel selectedContainer={selectedContainer} />
