@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { buildWebSocketUrl } from "@/hooks/useWebSocketUrl"
 
 const MAX_HISTORY_LENGTH = 16
@@ -48,8 +48,14 @@ export function useContainerMetricsWebSocket(selectedContainer) {
   const [error, setError] = useState(null)
   const [reconnectKey, setReconnectKey] = useState(0)
 
+  const selectedContainerRef = useRef(selectedContainer)
+
   const containerId = useMemo(() => {
     return getContainerId(selectedContainer)
+  }, [selectedContainer])
+
+  useEffect(() => {
+    selectedContainerRef.current = selectedContainer
   }, [selectedContainer])
 
   useEffect(() => {
@@ -92,7 +98,7 @@ export function useContainerMetricsWebSocket(selectedContainer) {
         const payload = JSON.parse(event.data)
         const normalizedMetric = normalizeMetricPayload(
           payload,
-          selectedContainer
+          selectedContainerRef.current
         )
 
         setLatestMetric(normalizedMetric)
@@ -126,7 +132,7 @@ export function useContainerMetricsWebSocket(selectedContainer) {
         socket.close()
       }
     }
-  }, [containerId, selectedContainer, reconnectKey])
+  }, [containerId, reconnectKey])
 
   function reconnect() {
     setReconnectKey((current) => current + 1)
