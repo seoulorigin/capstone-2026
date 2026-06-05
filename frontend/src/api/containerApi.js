@@ -37,10 +37,25 @@ export async function getContainerStats(containerId) {
 }
 
 // Docker Compose YAML 문자열을 백엔드로 전달하여 compose up 배포를 요청합니다.
-export async function deployComposeYaml(yamlText) {
-  const response = await api.post("/container/compose/up", {
-    yaml: yamlText,
-  })
+// export async function deployComposeYaml(yamlText) {
+//   const response = await api.post("/container/compose/up", {
+//     yaml: yamlText,
+//   })
 
+//   return response.data
+// }
+
+export async function deployComposeYaml(yamlText) {
+  const blob = new Blob([yamlText], { type: "text/plain" })
+  const file = new File([blob], "compose.yml", { type: "text/plain" })
+
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const response = await api.post("/container/compose/up", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  })
   return response.data
 }

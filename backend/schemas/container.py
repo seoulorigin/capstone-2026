@@ -10,3 +10,8 @@ class ContainerStatResponse(BaseModel) :
 
     class Config:
         from_attributes = True
+class ComposeDeployRequest(BaseModel):
+    yaml: str 
+
+class ComposeDeployResponse(BaseModel):
+    message: str
