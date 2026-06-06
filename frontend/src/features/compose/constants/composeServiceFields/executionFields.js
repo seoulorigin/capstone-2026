@@ -1,0 +1,48 @@
+// 실행 설정 카테고리의 Compose service field definition을 관리합니다.
+export const executionFields = [
+  {
+    key: "command",
+    yamlKey: "command",
+    label: "Command",
+    description: "컨테이너 시작 시 실행할 명령입니다.",
+    category: "execution",
+    type: "text",
+    placeholder: "npm run dev",
+  },
+  {
+    key: "entrypoint",
+    yamlKey: "entrypoint",
+    label: "Entrypoint",
+    description: "컨테이너 기본 entrypoint를 재정의합니다.",
+    category: "execution",
+    type: "text",
+    placeholder: "/docker-entrypoint.sh",
+  },
+  {
+    key: "workingDir",
+    yamlKey: "working_dir",
+    label: "Working Directory",
+    description: "컨테이너 내부 작업 디렉터리입니다.",
+    category: "execution",
+    type: "text",
+    placeholder: "/app",
+  },
+  {
+    key: "user",
+    yamlKey: "user",
+    label: "User",
+    description: "컨테이너 프로세스를 실행할 사용자입니다.",
+    category: "execution",
+    type: "text",
+    placeholder: "node",
+  },
+  {
+    key: "envFile",
+    yamlKey: "env_file",
+    label: "Env File",
+    description: "환경변수 파일 경로 목록입니다.",
+    category: "execution",
+    type: "list",
+    placeholder: ".env",
+  },
+]
