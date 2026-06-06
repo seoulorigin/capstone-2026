@@ -70,7 +70,7 @@ def ping():
         raise HTTPException(status_code=500, detail=f"Docker 연결 실패: {str(e)}")
 
 
-# SDK 방식으로  
+
 @router.post("/compose/up")
 async def deploy_compose(file: UploadFile = File(...)):
     try:
@@ -91,6 +91,9 @@ async def deploy_compose(file: UploadFile = File(...)):
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
                 
+
+        result = await docker_service.deploy_compose(yaml_text)
+        return {"status": "success", "message": "Deployment started", "details":result}
     except HTTPException:
         raise 
     except Exception as e:
@@ -130,6 +133,7 @@ def compose_logs(project_name: str, service_name: str = None):
             status_code=500,
             detail={"status": "error", "message": str(e)}
         )
+
 
 # 단일 컨테이너 상태 조회
 @router.get("/{container_id}")

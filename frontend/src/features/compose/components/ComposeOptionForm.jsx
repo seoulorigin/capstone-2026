@@ -1,106 +1,128 @@
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import ComposeServiceFields from "@/features/compose/components/ComposeServiceFields"
+
+const sampleOptions = {
+  services: [
+    {
+      id: "service-1",
+      serviceName: "frontend",
+      image: "node:20-alpine",
+      containerName: "frontend-container",
+      ports: [
+        {
+          hostPort: "5173",
+          containerPort: "5173",
+        },
+      ],
+      environment: [
+        {
+          key: "VITE_API_URL",
+          value: "http://localhost:8000",
+        },
+      ],
+    },
+    {
+      id: "service-2",
+      serviceName: "backend",
+      image: "python:3.12-slim",
+      containerName: "backend-container",
+      ports: [
+        {
+          hostPort: "8000",
+          containerPort: "8000",
+        },
+      ],
+      environment: [
+        {
+          key: "PYTHONPATH",
+          value: "/backend",
+        },
+      ],
+    },
+  ],
+}
+
+function createEmptyService(index) {
+  return {
+    id: `service-${Date.now()}-${index}`,
+    serviceName: `service-${index}`,
+    image: "",
+    containerName: "",
+    ports: [],
+    environment: [],
+  }
+}
+
+function normalizeServices(services) {
+  return Array.isArray(services) ? services : []
+}
 
 export default function ComposeOptionForm({ options, onChange }) {
-  const updateField = (field, value) => {
+  const services = normalizeServices(options.services)
+
+  const updateServices = (nextServices) => {
     onChange({
       ...options,
-      [field]: value,
+      services: nextServices,
     })
+  }
+
+  const updateService = (index, nextService) => {
+    const nextServices = services.map((service, serviceIndex) => {
+      if (serviceIndex !== index) return service
+
+      return nextService
+    })
+
+    updateServices(nextServices)
+  }
+
+  const addService = () => {
+    updateServices([...services, createEmptyService(services.length + 1)])
+  }
+
+  const removeService = (index) => {
+    if (services.length <= 1) {
+      return
+    }
+
+    const nextServices = services.filter((_, serviceIndex) => {
+      return serviceIndex !== index
+    })
+
+    updateServices(nextServices)
   }
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-2">
-        <Label htmlFor="serviceName">Service Name</Label>
-        <Input
-          id="serviceName"
-          value={options.serviceName}
-          onChange={(event) => updateField("serviceName", event.target.value)}
-          placeholder="app"
-        />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-medium text-slate-200">Services</h3>
+        </div>
+
+        <Button type="button" variant="outline" onClick={addService}>
+          서비스 추가
+        </Button>
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="image">Image</Label>
-        <Input
-          id="image"
-          value={options.image}
-          onChange={(event) => updateField("image", event.target.value)}
-          placeholder="nginx:latest"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="containerName">Container Name</Label>
-        <Input
-          id="containerName"
-          value={options.containerName}
-          onChange={(event) => updateField("containerName", event.target.value)}
-          placeholder="my-container"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="hostPort">Host Port</Label>
-        <Input
-          id="hostPort"
-          value={options.hostPort}
-          onChange={(event) => updateField("hostPort", event.target.value)}
-          placeholder="8080"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="containerPort">Container Port</Label>
-        <Input
-          id="containerPort"
-          value={options.containerPort}
-          onChange={(event) => updateField("containerPort", event.target.value)}
-          placeholder="80"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="environmentKey">Environment Key</Label>
-        <Input
-          id="environmentKey"
-          value={options.environmentKey}
-          onChange={(event) =>
-            updateField("environmentKey", event.target.value)
-          }
-          placeholder="NODE_ENV"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="environmentValue">Environment Value</Label>
-        <Input
-          id="environmentValue"
-          value={options.environmentValue}
-          onChange={(event) =>
-            updateField("environmentValue", event.target.value)
-          }
-          placeholder="production"
-        />
+      <div className="space-y-4">
+        {services.map((service, index) => (
+          <ComposeServiceFields
+            key={service.id || `service-${index}`}
+            service={service}
+            serviceIndex={index}
+            canRemove={services.length > 1}
+            onChange={(nextService) => updateService(index, nextService)}
+            onRemove={() => removeService(index)}
+          />
+        ))}
       </div>
 
       <Button
         type="button"
         variant="outline"
         className="w-full"
-        onClick={() =>
-          onChange({
-            serviceName: "app",
-            image: "nginx:latest",
-            containerName: "my-container",
-            hostPort: "8080",
-            containerPort: "80",
-            environmentKey: "NODE_ENV",
-            environmentValue: "production",
-          })
-        }
+        onClick={() => onChange(sampleOptions)}
       >
         샘플 값 채우기
       </Button>

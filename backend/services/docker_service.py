@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import os
 import yaml
+
 from docker.errors import NotFound, APIError
 from fastapi import HTTPException
 
@@ -60,7 +61,8 @@ class DockerService:
         }
 
     def get_container_stats(self, container_id: str) -> dict:
-        try:
+
+        try: 
             container = self.client.containers.get(container_id)
             if container.status != "running":
                 return {
@@ -118,6 +120,7 @@ class DockerService:
 
     async def deploy_compose(self, yaml_text: str) -> dict:
         # YAML 문자열을 받아 docker-compose CLI로 배포
+            
         try:
             yaml.safe_load(yaml_text)
         except yaml.YAMLError as e:
@@ -131,6 +134,7 @@ class DockerService:
             tmp_path = f.name
 
         loop = asyncio.get_event_loop()
+
 
         def run_compose():
             try:
@@ -150,6 +154,7 @@ class DockerService:
             output = await loop.run_in_executor(None, run_compose)
             return {"status": "success", "message": "Compose 배포가 완료되었습니다.", "output": output}
         except RuntimeError as e:
+
             raise HTTPException(
                 status_code=500,
                 detail={"status": "error", "message": str(e)},
@@ -375,6 +380,7 @@ class DockerService:
 
     # DB 동기화
 
+
     def sync_to_db(self, db=None):
         containers = self.list_containers(all=True)
         formatted = []
@@ -390,3 +396,4 @@ class DockerService:
 
 
 docker_service = DockerService()
+

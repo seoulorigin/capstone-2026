@@ -1,35 +1,46 @@
 // src/pages/ComposeEditor.jsx
-
+// Compose Editor 페이지의 상태, YAML 생성, 배포 흐름을 관리합니다.
 import { useState } from "react"
-import Editor from "@monaco-editor/react"
 
 import MainLayout from "@/layouts/MainLayout"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { deployComposeYaml } from "@/api/containerApi"
 import ComposeOptionForm from "@/features/compose/components/ComposeOptionForm"
+import ComposeEditorHeader from "@/features/compose/components/ComposeEditorHeader"
+import ComposeEditorToolbar from "@/features/compose/components/ComposeEditorToolbar"
+import ComposeFeedbackMessage from "@/features/compose/components/ComposeFeedbackMessage"
+import ComposeSyncControl from "@/features/compose/components/ComposeSyncControl"
+import ComposeYamlEditorPanel from "@/features/compose/components/ComposeYamlEditorPanel"
+import { Card } from "@/components/ui/card"
 import {
   convertOptionsToYaml,
-  convertYamlToOptions,
+  validateYamlSyntax,
 } from "@/features/compose/utils/composeYaml"
 
-// Compose Editor 옵션 UI의 초기 입력값을 정의합니다.
 const initialComposeOptions = {
-  serviceName: "app",
-  image: "nginx:latest",
-  containerName: "my-container",
-  hostPort: "8080",
-  containerPort: "80",
-  environmentKey: "NODE_ENV",
-  environmentValue: "production",
+  services: [
+    {
+      id: "service-1",
+      serviceName: "app",
+      image: "nginx:latest",
+      containerName: "my-container",
+      ports: [
+        {
+          hostPort: "8080",
+          containerPort: "80",
+        },
+      ],
+      environment: [
+        {
+          key: "NODE_ENV",
+          value: "production",
+        },
+      ],
+    },
+  ],
 }
 
-// YAML Editor의 초기 compose YAML 문자열을 정의합니다.
-const initialYamlText = `services:
-  app:
-    image: nginx:latest`
+const initialYamlText = convertOptionsToYaml(initialComposeOptions)
 
-// axios 또는 일반 Error 객체에서 화면에 표시할 에러 메시지를 추출합니다.
 function getErrorMessage(error) {
   return (
     error?.response?.data?.detail?.message ||
@@ -40,52 +51,45 @@ function getErrorMessage(error) {
 }
 
 export default function ComposeEditor() {
-  // 옵션 UI에서 관리하는 compose 입력 상태입니다.
   const [composeOptions, setComposeOptions] = useState(initialComposeOptions)
-
-  // Monaco Editor에서 관리하는 YAML 문자열 상태입니다.
   const [yamlText, setYamlText] = useState(initialYamlText)
-
-  // YAML 검증 또는 API 실패 메시지를 저장합니다.
   const [errorMessage, setErrorMessage] = useState("")
-
-  // Compose 배포 성공 메시지를 저장합니다.
   const [successMessage, setSuccessMessage] = useState("")
-
-  // Compose 배포 요청 중복 실행을 막기 위한 loading 상태입니다.
   const [isDeploying, setIsDeploying] = useState(false)
 
-  // 옵션 UI 값을 YAML 문자열로 변환합니다.
-  const handleOptionsToYaml = () => {
-    const nextYaml = convertOptionsToYaml(composeOptions)
-
-    setYamlText(nextYaml)
+  const resetMessages = () => {
     setErrorMessage("")
     setSuccessMessage("")
   }
 
-  // YAML 문자열을 옵션 UI 값으로 변환합니다.
-  const handleYamlToOptions = () => {
-    try {
-      const nextOptions = convertYamlToOptions(yamlText)
+  const handleComposeOptionsChange = (nextOptions) => {
+    setComposeOptions(nextOptions)
+    resetMessages()
+  }
 
-      setComposeOptions(nextOptions)
-      setErrorMessage("")
-      setSuccessMessage("")
+  const handleYamlTextChange = (value) => {
+    setYamlText(value || "")
+    resetMessages()
+  }
+
+  const handleGenerateYaml = () => {
+    try {
+      const nextYaml = convertOptionsToYaml(composeOptions)
+
+      setYamlText(nextYaml)
+      resetMessages()
     } catch {
-      setErrorMessage("YAML 문법 또는 지원하지 않는 Compose 구조입니다.")
+      setErrorMessage("Options 값을 YAML로 변환하는 중 오류가 발생했습니다.")
       setSuccessMessage("")
     }
   }
 
-  // 현재 YAML을 검증한 뒤 백엔드 compose up API로 배포 요청을 보냅니다.
   const handleDeployCompose = async () => {
     try {
       setIsDeploying(true)
-      setErrorMessage("")
-      setSuccessMessage("")
+      resetMessages()
 
-      convertYamlToOptions(yamlText)
+      validateYamlSyntax(yamlText)
 
       const result = await deployComposeYaml(yamlText)
 
@@ -102,90 +106,36 @@ export default function ComposeEditor() {
   return (
     <MainLayout>
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-100">
-            Compose Editor
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Docker Compose YAML을 옵션 또는 코드로 작성하고 배포합니다.
-          </p>
-        </div>
+        <ComposeEditorHeader />
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" onClick={handleOptionsToYaml}>
-            옵션 → YAML
-          </Button>
+        <ComposeEditorToolbar
+          isDeploying={isDeploying}
+          onDeployCompose={handleDeployCompose}
+        />
 
-          <Button variant="outline" onClick={handleYamlToOptions}>
-            YAML → 옵션
-          </Button>
+        <ComposeFeedbackMessage
+          errorMessage={errorMessage}
+          successMessage={successMessage}
+        />
 
-          <Button onClick={handleDeployCompose} disabled={isDeploying}>
-            {isDeploying ? "배포 요청 중..." : "Compose 실행"}
-          </Button>
-
-          {isDeploying && (
-            <p className="text-sm text-slate-400">
-              백엔드로 Compose YAML을 전송하고 있습니다.
-            </p>
-          )}
-        </div>
-
-        {(errorMessage || successMessage) && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
-            {errorMessage && (
-              <p className="text-sm text-red-400">{errorMessage}</p>
-            )}
-
-            {successMessage && (
-              <p className="text-sm text-cyan-300">{successMessage}</p>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <Card className="border-slate-800 bg-slate-950/70 p-5">
             <div className="mb-5">
               <h2 className="text-lg font-medium text-slate-200">Options</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                MVP 단계에서는 단일 service 기준 필드만 지원합니다.
-              </p>
             </div>
 
             <ComposeOptionForm
               options={composeOptions}
-              onChange={setComposeOptions}
+              onChange={handleComposeOptionsChange}
             />
           </Card>
 
-          <Card className="overflow-hidden border-slate-800 bg-slate-950/70 p-0">
-            <div className="border-b border-slate-800 px-4 py-3">
-              <h2 className="text-lg font-medium text-slate-200">
-                YAML Editor
-              </h2>
-            </div>
+          <ComposeSyncControl onGenerateYaml={handleGenerateYaml} />
 
-            <div className="h-[560px]">
-              <Editor
-                height="100%"
-                defaultLanguage="yaml"
-                value={yamlText}
-                onChange={(value) => {
-                  setYamlText(value || "")
-                  setErrorMessage("")
-                  setSuccessMessage("")
-                }}
-                theme="vs-dark"
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  tabSize: 2,
-                  wordWrap: "on",
-                  scrollBeyondLastLine: false,
-                }}
-              />
-            </div>
-          </Card>
+          <ComposeYamlEditorPanel
+            yamlText={yamlText}
+            onChange={handleYamlTextChange}
+          />
         </div>
       </div>
     </MainLayout>
