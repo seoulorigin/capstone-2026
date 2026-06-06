@@ -15,6 +15,98 @@ function normalizeObject(value) {
   return isPlainObject(value) ? value : {}
 }
 
+function normalizeObjectList(value) {
+  return Array.isArray(value) ? value.filter(isPlainObject) : []
+}
+
+function renderFieldDescription(description) {
+  if (!description) {
+    return null
+  }
+
+  return <p className="text-xs text-slate-500">{description}</p>
+}
+
+function renderTextListField({
+  field,
+  fieldId,
+  value,
+  onChange,
+  emptyMessage = "추가된 값이 없습니다.",
+}) {
+  const listValue = normalizeList(value)
+
+  const updateItem = (index, nextValue) => {
+    const nextList = listValue.map((item, itemIndex) => {
+      if (itemIndex !== index) return item
+      return nextValue
+    })
+
+    onChange(nextList)
+  }
+
+  const addItem = () => {
+    onChange([...listValue, ""])
+  }
+
+  const removeItem = (index) => {
+    const nextList = listValue.filter((_, itemIndex) => {
+      return itemIndex !== index
+    })
+
+    onChange(nextList)
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <Label>{field.label}</Label>
+
+          {field.description && (
+            <p className="mt-1 text-xs text-slate-500">
+              {field.description}
+            </p>
+          )}
+        </div>
+
+        <Button type="button" variant="outline" size="sm" onClick={addItem}>
+          항목 추가
+        </Button>
+      </div>
+
+      {listValue.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-800 px-3 py-3 text-sm text-slate-500">
+          {emptyMessage}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {listValue.map((item, index) => (
+            <div
+              key={`${fieldId}-${index}`}
+              className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+            >
+              <Input
+                value={item ?? ""}
+                onChange={(event) => updateItem(index, event.target.value)}
+                placeholder={field.placeholder}
+              />
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => removeItem(index)}
+              >
+                삭제
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ComposeDynamicField({
   idPrefix = "compose",
   field,
@@ -27,6 +119,7 @@ export default function ComposeDynamicField({
     return (
       <div className="grid gap-2">
         <Label htmlFor={fieldId}>{field.label}</Label>
+
         <select
           id={fieldId}
           value={value ?? ""}
@@ -40,9 +133,7 @@ export default function ComposeDynamicField({
           ))}
         </select>
 
-        {field.description && (
-          <p className="text-xs text-slate-500">{field.description}</p>
-        )}
+        {renderFieldDescription(field.description)}
       </div>
     )
   }
@@ -77,24 +168,49 @@ export default function ComposeDynamicField({
   }
 
   if (field.type === "list") {
-    const listValue = normalizeList(value)
+    return renderTextListField({
+      field,
+      fieldId,
+      value,
+      onChange,
+    })
+  }
 
-    const updateItem = (index, nextValue) => {
-      const nextList = listValue.map((item, itemIndex) => {
-        if (itemIndex !== index) return item
-        return nextValue
+  if (field.type === "keyValueList") {
+    return renderTextListField({
+      field,
+      fieldId,
+      value,
+      onChange,
+      emptyMessage: "추가된 KEY=VALUE 값이 없습니다.",
+    })
+  }
+
+  if (field.type === "objectList" || field.type === "namedObjectList") {
+    const objectListValue = normalizeObjectList(value)
+
+    const addItem = () => {
+      onChange([...objectListValue, {}])
+    }
+
+    const removeItem = (index) => {
+      const nextList = objectListValue.filter((_, itemIndex) => {
+        return itemIndex !== index
       })
 
       onChange(nextList)
     }
 
-    const addItem = () => {
-      onChange([...listValue, ""])
-    }
+    const updateObjectListField = (index, objectField, nextValue) => {
+      const nextList = objectListValue.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item
+        }
 
-    const removeItem = (index) => {
-      const nextList = listValue.filter((_, itemIndex) => {
-        return itemIndex !== index
+        return {
+          ...item,
+          [objectField.key]: nextValue,
+        }
       })
 
       onChange(nextList)
@@ -118,30 +234,45 @@ export default function ComposeDynamicField({
           </Button>
         </div>
 
-        {listValue.length === 0 ? (
+        {objectListValue.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-800 px-3 py-3 text-sm text-slate-500">
             추가된 값이 없습니다.
           </div>
         ) : (
-          <div className="space-y-2">
-            {listValue.map((item, index) => (
+          <div className="space-y-3">
+            {objectListValue.map((item, index) => (
               <div
                 key={`${fieldId}-${index}`}
-                className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                className="space-y-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3"
               >
-                <Input
-                  value={item ?? ""}
-                  onChange={(event) => updateItem(index, event.target.value)}
-                  placeholder={field.placeholder}
-                />
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-medium text-slate-400">
+                    항목 {index + 1}
+                  </p>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => removeItem(index)}
-                >
-                  삭제
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeItem(index)}
+                  >
+                    삭제
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {field.fields?.map((objectField) => (
+                    <ComposeDynamicField
+                      key={objectField.key}
+                      idPrefix={`${fieldId}-${index}`}
+                      field={objectField}
+                      value={item[objectField.key]}
+                      onChange={(nextValue) =>
+                        updateObjectListField(index, objectField, nextValue)
+                      }
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -170,22 +301,17 @@ export default function ComposeDynamicField({
           )}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-3">
           {field.fields?.map((objectField) => (
-            <div key={objectField.key} className="grid gap-2">
-              <Label htmlFor={`${fieldId}-${objectField.key}`}>
-                {objectField.label}
-              </Label>
-
-              <Input
-                id={`${fieldId}-${objectField.key}`}
-                value={objectValue[objectField.key] ?? ""}
-                onChange={(event) =>
-                  updateObjectField(objectField, event.target.value)
-                }
-                placeholder={objectField.placeholder}
-              />
-            </div>
+            <ComposeDynamicField
+              key={objectField.key}
+              idPrefix={fieldId}
+              field={objectField}
+              value={objectValue[objectField.key]}
+              onChange={(nextValue) =>
+                updateObjectField(objectField, nextValue)
+              }
+            />
           ))}
         </div>
       </div>
@@ -203,9 +329,7 @@ export default function ComposeDynamicField({
         placeholder={field.placeholder}
       />
 
-      {field.description && (
-        <p className="text-xs text-slate-500">{field.description}</p>
-      )}
+      {renderFieldDescription(field.description)}
     </div>
   )
 }

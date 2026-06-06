@@ -8,6 +8,10 @@ function normalizeList(value) {
   return Array.isArray(value) ? value : []
 }
 
+function normalizeObjectList(value) {
+  return Array.isArray(value) ? value.filter(isPlainObject) : []
+}
+
 function isEmptyFieldValue(value) {
   if (value === undefined || value === null || value === "") {
     return true
@@ -50,6 +54,52 @@ function buildListValue(value) {
   return listValue.length > 0 ? listValue : null
 }
 
+function parseKeyValueItem(item) {
+  if (typeof item !== "string") {
+    return null
+  }
+
+  const trimmedItem = item.trim()
+
+  if (!trimmedItem) {
+    return null
+  }
+
+  const separatorIndex = trimmedItem.indexOf("=")
+
+  if (separatorIndex <= 0) {
+    return null
+  }
+
+  const key = trimmedItem.slice(0, separatorIndex).trim()
+  const value = trimmedItem.slice(separatorIndex + 1).trim()
+
+  if (!key || !value) {
+    return null
+  }
+
+  return {
+    key,
+    value,
+  }
+}
+
+function buildKeyValueListValue(value) {
+  const result = {}
+
+  normalizeList(value).forEach((item) => {
+    const parsedItem = parseKeyValueItem(item)
+
+    if (parsedItem === null) {
+      return
+    }
+
+    result[parsedItem.key] = parsedItem.value
+  })
+
+  return Object.keys(result).length > 0 ? result : null
+}
+
 function buildObjectValue(field, value) {
   if (!isPlainObject(value)) {
     return null
@@ -59,13 +109,59 @@ function buildObjectValue(field, value) {
 
   field.fields?.forEach((objectField) => {
     const objectFieldValue = value[objectField.key]
-    const nextValue = buildTextValue(objectFieldValue)
+    const nextValue = buildComposeFieldValue(objectField, objectFieldValue)
 
     if (nextValue === null) {
       return
     }
 
     result[objectField.yamlKey] = nextValue
+  })
+
+  return Object.keys(result).length > 0 ? result : null
+}
+
+function buildObjectListValue(field, value) {
+  const objectListValue = normalizeObjectList(value)
+    .map((item) => {
+      return buildObjectValue(field, item)
+    })
+    .filter((item) => {
+      return item !== null
+    })
+
+  return objectListValue.length > 0 ? objectListValue : null
+}
+
+function buildNamedObjectListValue(field, value) {
+  const nameKey = field.nameKey ?? "name"
+  const result = {}
+
+  normalizeObjectList(value).forEach((item) => {
+    const name = buildTextValue(item[nameKey])
+
+    if (name === null) {
+      return
+    }
+
+    const entry = {}
+
+    field.fields?.forEach((objectField) => {
+      if (objectField.key === nameKey) {
+        return
+      }
+
+      const objectFieldValue = item[objectField.key]
+      const nextValue = buildComposeFieldValue(objectField, objectFieldValue)
+
+      if (nextValue === null) {
+        return
+      }
+
+      entry[objectField.yamlKey] = nextValue
+    })
+
+    result[name] = entry
   })
 
   return Object.keys(result).length > 0 ? result : null
@@ -80,8 +176,20 @@ export function buildComposeFieldValue(field, value) {
     return buildListValue(value)
   }
 
+  if (field.type === "keyValueList") {
+    return buildKeyValueListValue(value)
+  }
+
   if (field.type === "object") {
     return buildObjectValue(field, value)
+  }
+
+  if (field.type === "objectList") {
+    return buildObjectListValue(field, value)
+  }
+
+  if (field.type === "namedObjectList") {
+    return buildNamedObjectListValue(field, value)
   }
 
   return buildTextValue(value)
