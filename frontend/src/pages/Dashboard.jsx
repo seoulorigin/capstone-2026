@@ -5,6 +5,8 @@ import DetailPanelSection from "@/components/dashboard/DetailPanelSection"
 import { useDashboardState } from "@/features/dashboard/hooks/useDashboardState"
 import { useContainerSummary } from "@/features/dashboard/hooks/useContainerSummary"
 
+const CONTAINER_LIST_POLLING_INTERVAL_MS = 3000
+
 // 컨테이너 데이터를 기반으로 대시보드 화면을 구성하는 페이지 컴포넌트
 export default function Dashboard() {
   const {
@@ -12,7 +14,10 @@ export default function Dashboard() {
     isLoading: isContainersLoading,
     isError: isContainersError,
     error: containersError,
-  } = useContainers()
+  } = useContainers({
+    refetchInterval: CONTAINER_LIST_POLLING_INTERVAL_MS,
+    refetchIntervalInBackground: true,
+  })
 
   // 컨테이너 데이터를 배열 형태로 정규화
   const containers = Array.isArray(containerData)
@@ -67,7 +72,7 @@ export default function Dashboard() {
                   label="상태 기준"
                   value="running / restarting / inactive"
                 />
-                <HeaderMetaChip label="데이터" value="API + Mock Preview" />
+                <HeaderMetaChip label="데이터" value="API Polling + Preview" />
               </div>
             </div>
 

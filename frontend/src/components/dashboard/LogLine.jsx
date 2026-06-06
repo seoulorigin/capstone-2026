@@ -1,9 +1,13 @@
 // 개별 로그 라인을 표시하는 UI 컴포넌트
-export default function LogLine({ time, level, message }) {
+export default function LogLine({ time, level, stream, message }) {
+  const displayLevel = stream ?? level ?? "INFO"
+
+  const normalizedLevel = String(displayLevel).toLowerCase()
+
   const levelClassName =
-    level === "ERROR"
+    normalizedLevel === "stderr" || normalizedLevel === "error"
       ? "text-rose-300"
-      : level === "WARN"
+      : normalizedLevel === "warn" || normalizedLevel === "warning"
       ? "text-amber-300"
       : "text-cyan-300"
 
@@ -12,7 +16,7 @@ export default function LogLine({ time, level, message }) {
       <div className="flex flex-col gap-1 md:flex-row md:items-start md:gap-3">
         <span className="shrink-0 text-xs text-slate-500">{time}</span>
         <span className={`shrink-0 text-xs font-semibold ${levelClassName}`}>
-          {level}
+          {displayLevel}
         </span>
         <p className="min-w-0 text-sm text-slate-300">{message}</p>
       </div>

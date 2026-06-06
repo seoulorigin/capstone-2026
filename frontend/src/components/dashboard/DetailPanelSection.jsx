@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button"
 import MetricsPreviewPanel from "@/components/dashboard/MetricsPreviewPanel"
 import LogsPreviewPanel from "@/components/dashboard/LogsPreviewPanel"
 import PanelMessage from "@/components/dashboard/PanelMessage"
-import { useContainerStats } from "@/hooks/useContainerStats"
+import { useContainerMetricHistory } from "@/hooks/useContainerMetricHistory"
+import { useContainerLogs } from "@/hooks/useContainerLogs"
 
 // 선택된 컨테이너의 메트릭 또는 로그 영역을 표시한다.
 export default function DetailPanelSection({
@@ -14,14 +15,24 @@ export default function DetailPanelSection({
   const selectedContainerId =
     selectedContainer?.container_id ?? selectedContainer?.id ?? null
 
+  const metricsResult = useContainerMetricHistory(selectedContainer)
+  const logsResult = useContainerLogs(selectedContainer)
+
   const {
-    data: stats,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useContainerStats(selectedContainerId)
+    connectionStatus: metricsConnectionStatus = "idle",
+    reconnect: reconnectMetrics = () => {},
+  } = metricsResult ?? {}
+
+  const {
+    connectionStatus: logsConnectionStatus = "idle",
+    reconnect: reconnectLogs = () => {},
+  } = logsResult ?? {}
+
+  const activeConnectionStatus =
+    activeTab === "metrics" ? metricsConnectionStatus : logsConnectionStatus
+
+  const handleReconnect =
+    activeTab === "metrics" ? reconnectMetrics : reconnectLogs
 
   return (
     <section>
@@ -66,17 +77,19 @@ export default function DetailPanelSection({
                 </Button>
               </div>
 
-              {activeTab === "metrics" ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => refetch()}
-                  disabled={!selectedContainerId || isFetching}
-                  className="h-8 border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 transition-all duration-150 hover:-translate-y-[1px] hover:bg-slate-800 hover:text-slate-50 disabled:opacity-50"
-                >
-                  {isFetching ? "..." : "새로고침"}
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReconnect}
+                disabled={
+                  !selectedContainerId || activeConnectionStatus === "connecting"
+                }
+                className="h-8 border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 transition-all duration-150 hover:-translate-y-[1px] hover:bg-slate-800 hover:text-slate-50 disabled:opacity-50"
+              >
+                {activeConnectionStatus === "connecting"
+                  ? "연결 중"
+                  : "WS 재연결"}
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -88,13 +101,13 @@ export default function DetailPanelSection({
             <MetricsPreviewPanel
               selectedContainer={selectedContainer}
               selectedContainerId={selectedContainerId}
-              stats={stats}
-              isLoading={isLoading}
-              isError={isError}
-              error={error}
+              metricsResult={metricsResult}
             />
           ) : (
-            <LogsPreviewPanel selectedContainer={selectedContainer} />
+            <LogsPreviewPanel
+              selectedContainer={selectedContainer}
+              logsResult={logsResult}
+            />
           )}
         </CardContent>
       </Card>

@@ -8,13 +8,18 @@ import MonitoringChartPanel from "@/components/monitoring/MonitoringChartPanel"
 import MonitoringStatusCard from "@/components/monitoring/MonitoringStatusCard"
 import MonitoringLogTerminal from "@/components/monitoring/MonitoringLogTerminal"
 
+const CONTAINER_LIST_POLLING_INTERVAL_MS = 3000
+
 export default function Monitoring() {
   const {
     data: containerData,
     isLoading: isContainersLoading,
     isError: isContainersError,
     error: containersError,
-  } = useContainers()
+  } = useContainers({
+    refetchInterval: CONTAINER_LIST_POLLING_INTERVAL_MS,
+    refetchIntervalInBackground: true,
+  })
 
   const containers = useMemo(() => {
     return Array.isArray(containerData)
@@ -85,6 +90,7 @@ export default function Monitoring() {
                 value="/container/ws/logs/{container_id}"
               />
               <HeaderMetaChip label="Mode" value="Real WS + Mock Fallback" />
+              <HeaderMetaChip label="List" value="API Polling" />
             </div>
           </div>
         </header>
