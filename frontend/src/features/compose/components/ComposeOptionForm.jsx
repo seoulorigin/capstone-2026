@@ -5,39 +5,44 @@ const sampleOptions = {
   services: [
     {
       id: "service-1",
-      serviceName: "frontend",
-      image: "node:20-alpine",
-      containerName: "frontend-container",
+      serviceName: "test-nginx-1",
+      image: "nginx:latest",
+      containerName: "",
       ports: [
         {
-          hostPort: "5173",
-          containerPort: "5173",
+          hostPort: "18080",
+          containerPort: "80",
         },
       ],
       environment: [
         {
-          key: "VITE_API_URL",
-          value: "http://localhost:8000",
+          key: "TEST_MODE",
+          value: "compose-nginx-1",
         },
       ],
+      optionalFields: {
+        restart: "unless-stopped",
+        labels: ["app=compose-test", "role=web"],
+      },
     },
     {
       id: "service-2",
-      serviceName: "backend",
-      image: "python:3.12-slim",
-      containerName: "backend-container",
-      ports: [
-        {
-          hostPort: "8000",
-          containerPort: "8000",
-        },
-      ],
+      serviceName: "test-worker-1",
+      image: "alpine:latest",
+      containerName: "",
+      ports: [],
       environment: [
         {
-          key: "PYTHONPATH",
-          value: "/backend",
+          key: "TEST_MODE",
+          value: "compose-worker-1",
         },
       ],
+      optionalFields: {
+        command:
+          "sh -c \"while true; do echo '[worker-1] compose multi-service test running'; sleep 3; done\"",
+        restart: "unless-stopped",
+        labels: ["app=compose-test", "role=worker"],
+      },
     },
   ],
 }
